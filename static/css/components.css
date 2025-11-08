@@ -62,8 +62,19 @@
 
 /* Upload Section */
 .upload-section {
-    max-width: 800px;
+    max-width: 1400px;
     margin: 0 auto;
+}
+
+.upload-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.upload-main {
+    min-width: 0;
 }
 
 .upload-container {
@@ -71,6 +82,107 @@
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
+}
+
+/* ZIP Structure Sidebar */
+.zip-structure-sidebar {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 2rem;
+}
+
+.structure-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid var(--gray-300);
+    background: var(--gray-50);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.structure-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    color: var(--gray-800);
+}
+
+.btn-close-sidebar {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-600);
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.btn-close-sidebar:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--gray-800);
+}
+
+.structure-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.structure-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-600);
+}
+
+.structure-list {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.8;
+}
+
+.structure-item {
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    transition: var(--transition);
+    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.structure-item:hover {
+    background: var(--gray-100);
+}
+
+.structure-item.directory {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.structure-item.file {
+    color: var(--gray-700);
+}
+
+.structure-item .file-icon {
+    margin-right: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.structure-item .file-size {
+    color: var(--gray-500);
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
 }
 
 .upload-area {
@@ -1210,6 +1322,17 @@
     }
 
     /* Upload Section Mobile */
+    .upload-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .zip-structure-sidebar {
+        position: relative;
+        top: 0;
+        max-height: 400px;
+        margin-top: 2rem;
+    }
+
     .upload-area {
         padding: 2rem 1rem;
     }

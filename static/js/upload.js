@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadProgressFill = document.getElementById('upload-progress-fill');
     const uploadProgressText = document.getElementById('upload-progress-text');
     const uploadStatusText = document.getElementById('upload-status-text');
+    const zipStructureSidebar = document.getElementById('zip-structure-sidebar');
+    const structureList = document.getElementById('structure-list');
+    const structureLoading = document.getElementById('structure-loading');
+    const closeSidebarBtn = document.getElementById('close-sidebar');
 
     // Configuration
     const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB in bytes
@@ -130,6 +134,72 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadBtn.disabled = true;
         clearValidationMessages();
         hideUploadProgress();
+        hideZipStructure();
+    }
+
+    // Display ZIP structure
+    function displayZipStructure(structure) {
+        if (!structure || structure.length === 0) {
+            return;
+        }
+
+        structureList.innerHTML = '';
+        
+        structure.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `structure-item ${item.is_file ? 'file' : 'directory'}`;
+            
+            const icon = item.is_file ? '📄' : '📁';
+            const sizeDisplay = item.is_file && item.size > 0 ? `<span class="file-size">(${formatFileSize(item.size)})</span>` : '';
+            
+            div.innerHTML = `
+                <span class="file-icon">${icon}</span>
+                <span class="structure-name">${escapeHtml(item.display)}</span>
+                ${sizeDisplay}
+            `;
+            
+            structureList.appendChild(div);
+        });
+
+        zipStructureSidebar.style.display = 'flex';
+    }
+
+    // Fetch ZIP structure from API
+    async function fetchZipStructure(fileId) {
+        structureLoading.style.display = 'block';
+        structureList.innerHTML = '';
+
+        try {
+            const response = await fetch(`/api/zip-structure/${fileId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.structure && data.structure.length > 0) {
+                    displayZipStructure(data.structure);
+                } else {
+                    structureList.innerHTML = '<p style="padding: 1rem; color: var(--gray-600);">No files found in ZIP archive</p>';
+                    zipStructureSidebar.style.display = 'flex';
+                }
+            } else {
+                console.error('Error fetching ZIP structure:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching ZIP structure:', error);
+        } finally {
+            structureLoading.style.display = 'none';
+        }
+    }
+
+    // Hide ZIP structure
+    function hideZipStructure() {
+        zipStructureSidebar.style.display = 'none';
+        structureList.innerHTML = '';
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // Show validation errors
@@ -233,16 +303,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     const response = JSON.parse(xhr.responseText);
                     updateUploadProgress(100, 'Upload complete!');
                     
-                    // Redirect to next page (context form or progress)
-                    setTimeout(function() {
+                    // Display ZIP structure if available
+                    if (response.structure && response.structure.length > 0) {
+                        displayZipStructure(response.structure);
+                    } else if (response.file_id) {
+                        // Fetch structure from API
+                        fetchZipStructure(response.file_id);
+                    }
+                    
+                    // Enable continue button to proceed to next step
+                    uploadBtn.textContent = 'Continue to Context Form';
+                    uploadBtn.disabled = false;
+                    uploadBtn.onclick = function(e) {
+                        e.preventDefault();
                         if (response.redirect_url) {
                             window.location.href = response.redirect_url;
                         } else if (response.file_id) {
                             window.location.href = `/context/${response.file_id}`;
-                        } else {
-                            window.location.href = '/';
                         }
-                    }, 500);
+                    };
                 } catch (error) {
                     console.error('Error parsing response:', error);
                     showValidationErrors(['Upload failed. Please try again.']);
@@ -281,6 +360,13 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Upload File';
         hideUploadProgress();
+    }
+
+    // Close sidebar handler
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', function() {
+            hideZipStructure();
+        });
     }
 
     // Prevent default drag behaviors on document
