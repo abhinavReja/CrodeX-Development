@@ -30,10 +30,10 @@
         </div>
 
         <div class="download-actions">
-            <a href="{{ url_for('download_file', file_id=file_id) }}" class="btn btn-primary btn-large" id="download-btn">
+            <a href="{{ url_for('download.download_file', file_id=file_id) }}" class="btn btn-primary btn-large" id="download-btn">
                 Download File
             </a>
-            <a href="{{ url_for('upload') }}" class="btn btn-secondary">Upload Another File</a>
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">Upload Another File</a>
         </div>
 
         <div class="share-options">
@@ -50,7 +50,7 @@
 {% block extra_js %}
 <script>
     const fileId = '{{ file_id }}';
-    const downloadUrl = '{{ url_for("download_file", file_id=file_id) }}';
+    const downloadUrl = '{{ url_for("download.download_file", file_id=file_id) }}';
 </script>
 <script src="{{ url_for('static', filename='js/download.js') }}"></script>
 {% endblock %}

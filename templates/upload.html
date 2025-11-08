@@ -11,7 +11,7 @@
         <!-- Main Upload Container -->
         <div class="upload-main">
             <div class="upload-container">
-                <form id="upload-form" method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+                <form id="upload-form" method="POST" action="{{ url_for('upload.upload') }}" enctype="multipart/form-data">
                     <div class="upload-area" id="upload-area">
                         <input type="file" id="file-input" name="file" accept=".zip,application/zip,application/x-zip-compressed" required>
                         <div class="upload-placeholder">
@@ -51,7 +51,7 @@
 
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary" id="upload-btn" disabled>Upload File</button>
-                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

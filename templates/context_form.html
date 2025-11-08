@@ -20,7 +20,7 @@
     <!-- Validation Messages -->
     <div class="validation-messages" id="validation-messages"></div>
 
-    <form id="context-form" method="POST" action="{{ url_for('context_form') }}" novalidate>
+    <form id="context-form" method="POST" action="{{ url_for('analysis.context_form', file_id=file_id) }}" novalidate>
         <input type="hidden" name="file_id" id="file-id" value="{{ file_id }}">
         
         <!-- Context Type -->
@@ -64,7 +64,7 @@
         <!-- Form Actions -->
         <div class="form-actions">
             <button type="submit" class="btn btn-primary" id="submit-btn">Continue</button>
-            <a href="{{ url_for('upload') }}" class="btn btn-secondary">Back</a>
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">Back</a>
         </div>
     </form>
 </div>
