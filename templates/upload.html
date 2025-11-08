@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Upload - CrodeX{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <h1>Upload Your ZIP File</h1>
+    <p class="section-description">Select a ZIP file to upload and process (Max size: 100MB)</p>
+
+    <div class="upload-container">
+        <form id="upload-form" method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" name="file" accept=".zip,application/zip,application/x-zip-compressed" required>
+                <div class="upload-placeholder">
+                    <div class="upload-icon">📦</div>
+                    <p><strong>Drag and drop your ZIP file here</strong></p>
+                    <p class="upload-hint">or click to browse</p>
+                    <p class="upload-format">Accepted format: .zip (Max 100MB)</p>
+                </div>
+                <div class="upload-preview" id="upload-preview" style="display: none;">
+                    <div class="file-info">
+                        <div class="file-icon">📦</div>
+                        <div class="file-details">
+                            <span class="file-name" id="file-name"></span>
+                            <span class="file-size" id="file-size"></span>
+                            <span class="file-type" id="file-type"></span>
+                        </div>
+                        <button type="button" class="btn-remove" id="btn-remove" title="Remove file">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Messages -->
+            <div class="validation-messages" id="validation-messages"></div>
+
+            <!-- Upload Progress Bar -->
+            <div class="upload-progress-container" id="upload-progress-container" style="display: none;">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="upload-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="upload-progress-text">0%</span>
+                        <span id="upload-status-text">Preparing upload...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="upload-btn" disabled>Upload File</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}
+

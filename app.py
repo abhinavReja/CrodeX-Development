@@ -3,11 +3,12 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 import uuid
 from datetime import datetime
 
-# Get the parent directory path (Hacathon)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Get the directory where this app.py file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
+# Explicitly set template and static folders
 app = Flask(__name__, 
             template_folder=TEMPLATE_DIR,
             static_folder=STATIC_DIR)
