@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Provide Context - CrodeX{% endblock %}
+
+{% block content %}
+<div class="context-section">
+    <h1>Provide Additional Context</h1>
+    <p class="section-description">Help us understand your file better by providing some context</p>
+
+    <!-- Auto-suggestions Banner -->
+    <div class="suggestions-banner" id="suggestions-banner" style="display: none;">
+        <div class="suggestions-header">
+            <span class="suggestions-icon">💡</span>
+            <strong>Auto-detected suggestions based on file analysis:</strong>
+            <button type="button" class="btn-close-suggestions" id="close-suggestions">×</button>
+        </div>
+        <div class="suggestions-content" id="suggestions-content"></div>
+    </div>
+
+    <!-- Validation Messages -->
+    <div class="validation-messages" id="validation-messages"></div>
+
+    <form id="context-form" method="POST" action="{{ url_for('analysis.context_form', file_id=file_id) }}" novalidate>
+        <input type="hidden" name="file_id" id="file-id" value="{{ file_id }}">
+        
+        <!-- Context Type -->
+        <div class="form-group">
+            <label for="context-type">Context Type <span class="required">*</span></label>
+            <select id="context-type" name="context_type" class="form-control" required>
+                <option value="">Select context type</option>
+                <option value="document">Document</option>
+                <option value="image">Image</option>
+                <option value="code">Code</option>
+                <option value="data">Data</option>
+                <option value="archive">Archive</option>
+                <option value="other">Other</option>
+            </select>
+            <span class="field-error" id="context-type-error"></span>
+        </div>
+
+        <!-- Description with Auto-suggestions -->
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control autocomplete-input" rows="5" 
+                      placeholder="Describe your file or provide additional context..."></textarea>
+            <div class="autocomplete-suggestions" id="description-suggestions"></div>
+            <span class="field-error" id="description-error"></span>
+        </div>
+
+        <!-- Dynamic Fields Container -->
+        <div id="dynamic-fields">
+            <!-- Dynamic fields will be added here by JavaScript -->
+        </div>
+
+        <!-- Feature Checkboxes -->
+        <div class="form-group feature-checkboxes-group" id="feature-checkboxes-group" style="display: none;">
+            <label class="feature-group-label">Processing Features <span class="feature-hint">(Select desired features)</span></label>
+            <div class="feature-checkboxes" id="feature-checkboxes">
+                <!-- Feature checkboxes will be dynamically generated -->
+            </div>
+            <span class="field-error" id="features-error"></span>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submit-btn">Continue</button>
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">Back</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/context_form.js') }}"></script>
+{% endblock %}
+

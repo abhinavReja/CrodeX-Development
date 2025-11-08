@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Processing - CrodeX{% endblock %}
+
+{% block content %}
+<div class="progress-section">
+    <h1>Processing Your File</h1>
+    <p class="section-description">Please wait while we process your file</p>
+
+    <!-- Error Display -->
+    <div class="error-container" id="error-container" style="display: none;">
+        <div class="error-alert" id="error-alert">
+            <div class="error-header">
+                <span class="error-icon">⚠️</span>
+                <strong>Processing Error</strong>
+            </div>
+            <div class="error-message" id="error-message"></div>
+            <div class="error-details" id="error-details"></div>
+            <div class="error-actions">
+                <button type="button" class="btn btn-primary" id="retry-btn">Retry</button>
+                <button type="button" class="btn btn-secondary" id="cancel-error-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <!-- Overall Progress -->
+        <div class="progress-bar-container">
+            <div class="progress-header">
+                <span class="progress-title">Overall Progress</span>
+                <span class="progress-percentage" id="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Current Status -->
+        <div class="progress-status">
+            <div class="status-item" id="status-current">
+                <span class="status-icon">⏳</span>
+                <div class="status-content">
+                    <span class="status-text">Initializing...</span>
+                    <span class="status-time" id="status-time"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step" id="step-1" data-step="1">
+                <div class="step-icon">1</div>
+                <div class="step-label">Uploaded</div>
+            </div>
+            <div class="step" id="step-2" data-step="2">
+                <div class="step-icon">2</div>
+                <div class="step-label">Processing</div>
+            </div>
+            <div class="step" id="step-3" data-step="3">
+                <div class="step-icon">3</div>
+                <div class="step-label">Converting</div>
+            </div>
+            <div class="step" id="step-4" data-step="4">
+                <div class="step-icon">4</div>
+                <div class="step-label">Complete</div>
+            </div>
+        </div>
+
+        <!-- File-by-File Progress -->
+        <div class="files-progress-container" id="files-progress-container" style="display: none;">
+            <div class="files-progress-header">
+                <h3>File Processing Details</h3>
+                <span class="files-count" id="files-count"></span>
+            </div>
+            <div class="files-list" id="files-list">
+                <!-- File progress items will be dynamically added here -->
+            </div>
+        </div>
+
+        <!-- Processing Log -->
+        <div class="processing-log-container" id="processing-log-container">
+            <div class="log-header">
+                <h3>Processing Log</h3>
+                <button type="button" class="btn-log-toggle" id="log-toggle-btn">Show</button>
+            </div>
+            <div class="log-content" id="log-content" style="display: none;">
+                <div class="log-entries" id="log-entries"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Actions -->
+    <div class="progress-actions">
+        <button type="button" class="btn btn-success btn-large" id="download-btn" style="display: none;">
+            <span class="btn-icon">📥</span>
+            Download Processed Files
+        </button>
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel Processing</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const taskId = '{{ task_id }}';
+</script>
+<script src="{{ url_for('static', filename='js/progress.js') }}"></script>
+{% endblock %}
+

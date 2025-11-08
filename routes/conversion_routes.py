@@ -1,0 +1,97 @@
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, Response
+import json
+import time
+import os
+import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import shared storage
+from storage import tasks
+
+conversion_bp = Blueprint('conversion', __name__)
+api_conversion_bp = Blueprint('api_conversion', __name__)
+
+# Template route for progress page (no prefix)
+@conversion_bp.route('/progress/<task_id>', methods=['GET'])
+def progress(task_id):
+    """Display progress page - Template route"""
+    if task_id not in tasks:
+        flash('Task not found', 'error')
+        return redirect(url_for('main.index'))
+    return render_template('progress.html', task_id=task_id)
+
+# API routes (will be registered with /api prefix)
+@api_conversion_bp.route('/progress/<task_id>', methods=['GET'])
+def progress_status_api(task_id):
+    """Get conversion status - API route"""
+    if task_id not in tasks:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    task = tasks[task_id]
+    return jsonify({
+        'task_id': task_id,
+        'progress': task.get('progress', 0),
+        'status': task.get('status', 'pending'),
+        'status_message': task.get('status_message', 'Processing...'),
+        'step': task.get('step', 1),
+        'files': task.get('files', []),
+        'file_id': task.get('file_id')
+    }), 200
+
+@api_conversion_bp.route('/progress/stream/<task_id>')
+def progress_stream(task_id):
+    """Server-Sent Events stream for real-time progress updates"""
+    
+    def generate():
+        while True:
+            if task_id not in tasks:
+                yield f"data: {json.dumps({'error': 'Task not found'})}\n\n"
+                break
+            
+            task = tasks[task_id]
+            data = {
+                'progress': task.get('progress', 0),
+                'status': task.get('status', 'pending'),
+                'status_message': task.get('status_message', 'Processing...'),
+                'step': task.get('step', 1),
+                'files': task.get('files', []),
+            }
+            
+            yield f"data: {json.dumps(data)}\n\n"
+            
+            if task.get('status') in ['completed', 'failed', 'cancelled']:
+                break
+            
+            time.sleep(1)  # Update every second
+    
+    return Response(generate(), mimetype='text/event-stream')
+
+@api_conversion_bp.route('/convert', methods=['POST'])
+def convert():
+    """Start conversion process"""
+    data = request.get_json()
+    task_id = data.get('task_id')
+    
+    if not task_id or task_id not in tasks:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Update task status
+    tasks[task_id]['status'] = 'processing'
+    tasks[task_id]['step'] = 2
+    
+    return jsonify({
+        'task_id': task_id,
+        'status': 'processing'
+    }), 200
+
+@api_conversion_bp.route('/cancel/<task_id>', methods=['POST'])
+def cancel_task(task_id):
+    """Cancel a conversion task - API route"""
+    if task_id not in tasks:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    tasks[task_id]['status'] = 'cancelled'
+    return jsonify({'message': 'Task cancelled'}), 200
+
