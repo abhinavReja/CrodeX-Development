@@ -38,12 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Start conversion tracking
-    if (typeof taskId !== 'undefined' && taskId) {
-        startConversion();
+    // Get project_id from template variable (window.projectId) or extract from URL
+    let projectId = null;
+    
+    // First, try to get projectId from window (set by template in progress.html)
+    if (typeof window.projectId !== 'undefined' && window.projectId) {
+        projectId = window.projectId;
     } else {
-        // If no taskId, show error or simulate progress
-        addLogEntry('No task ID found. Showing demo progress...', 'warning');
-        simulateProgress();
+        // Extract from URL path (e.g., /progress/3c8849c0-e95e-4ecd-b2f3-d32d0e602f26)
+        const pathParts = window.location.pathname.split('/').filter(part => part);
+        const progressIndex = pathParts.indexOf('progress');
+        if (progressIndex !== -1 && pathParts[progressIndex + 1]) {
+            projectId = pathParts[progressIndex + 1];
+        } else if (pathParts.length > 0) {
+            // Fallback: use last part of path
+            projectId = pathParts[pathParts.length - 1];
+        }
+    }
+    
+    // Validate projectId
+    if (projectId && projectId !== 'progress' && projectId !== '') {
+        startConversion(projectId);
+    } else {
+        addLogEntry('No project ID found. Please upload a file first.', 'error');
+        showError('No project found', 'Please start by uploading a file.');
     }
 });
 
@@ -90,101 +108,133 @@ function getFrameworkIcon(framework) {
     return 'fas fa-code';
 }
 
-async function startConversion() {
-    conversionStartTime = Date.now();
-    addLogEntry('Starting conversion process...', 'info');
-    
-    // Auto-start conversion if task exists
-    if (typeof taskId !== 'undefined' && taskId) {
-        try {
-            // Trigger conversion start
-            const response = await fetch('/api/convert', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ task_id: taskId })
-            });
-            
-            if (response.ok) {
-                addLogEntry('Conversion process started', 'success');
-            }
-        } catch (error) {
-            console.error('Error starting conversion:', error);
-            addLogEntry('Error starting conversion: ' + error.message, 'error');
-        }
-    }
-    
-    // Try to use SSE first, then fallback to polling
-    if (typeof EventSource !== 'undefined' && typeof taskId !== 'undefined') {
-        startSSEConnection(taskId);
-    } else if (typeof taskId !== 'undefined') {
-        startProgressPolling();
-    } else {
-        // Mock progress for demonstration
-        simulateProgress();
-    }
-}
-
-function startSSEConnection(taskId) {
-    try {
-        eventSource = new EventSource(`/api/progress/stream/${taskId}`);
-        
-        eventSource.onmessage = function(event) {
-            try {
-                const data = JSON.parse(event.data);
-                handleProgressUpdate(data);
-            } catch (error) {
-                console.error('Error parsing SSE message:', error);
-            }
-        };
-        
-        eventSource.onerror = function(error) {
-            console.error('SSE connection error:', error);
-            if (eventSource) {
-                eventSource.close();
-            }
-            // Fallback to polling
-            startProgressPolling();
-        };
-        
-        eventSource.onopen = function() {
-            addLogEntry('Connected to real-time updates', 'info');
-        };
-    } catch (error) {
-        console.error('Error establishing SSE connection:', error);
-        startProgressPolling();
-    }
-}
-
-function startProgressPolling() {
-    if (typeof taskId === 'undefined') {
-        simulateProgress();
+async function startConversion(projectId) {
+    if (!projectId) {
+        addLogEntry('No project ID found', 'error');
+        showError('No project ID', 'Please upload a file first.');
         return;
     }
     
-    addLogEntry('Using polling for updates', 'info');
+    conversionStartTime = Date.now();
+    addLogEntry('Starting conversion process...', 'info');
+    
+    // Check if conversion is already in progress or completed
+    try {
+        const statusResponse = await fetch(`/api/conversion-progress/${projectId}`);
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            if (statusData.status === 'success' && statusData.progress) {
+                const progress = statusData.progress;
+                if (progress.complete) {
+                    addLogEntry('Conversion already completed', 'success');
+                    handleConversionComplete({ project_id: projectId });
+                    return;
+                } else if (progress.percentage > 0) {
+                    addLogEntry('Conversion already in progress', 'info');
+                    startProgressPolling(projectId);
+                    return;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking conversion status:', error);
+    }
+    
+    // Auto-start conversion if context is confirmed
+    try {
+        // Trigger conversion start (target_framework is in session context)
+        const response = await fetch('/api/convert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})  // Target framework is in session context
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            addLogEntry('Conversion process started', 'success');
+            // Start tracking progress
+            startProgressPolling(projectId);
+        } else {
+            const errorData = await response.json();
+            addLogEntry('Error starting conversion: ' + (errorData.message || 'Unknown error'), 'error');
+            handleConversionError(errorData.message || 'Conversion failed to start');
+        }
+    } catch (error) {
+        console.error('Error starting conversion:', error);
+        addLogEntry('Error starting conversion: ' + error.message, 'error');
+        handleConversionError('Failed to start conversion: ' + error.message);
+    }
+}
+
+function startProgressPolling(projectId) {
+    if (!projectId) {
+        addLogEntry('No project ID available for progress tracking', 'error');
+        return;
+    }
+    
+    addLogEntry('Starting progress tracking', 'info');
+    
+    // Clear any existing interval
+    if (progressPollInterval) {
+        clearInterval(progressPollInterval);
+    }
+    
     progressPollInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/api/progress/${taskId}`);
+            const response = await fetch(`/api/conversion-progress/${projectId}`);
             if (response.ok) {
-                const data = await response.json();
-                handleProgressUpdate(data);
-                
-                if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
-                    clearInterval(progressPollInterval);
+                const result = await response.json();
+                if (result.status === 'success' && result.progress) {
+                    const progress = result.progress;
+                    
+                    // Convert progress data to format expected by handleProgressUpdate
+                    const progressData = {
+                        progress: progress.percentage || 0,
+                        status: progress.stage || 'pending',
+                        status_message: progress.message || 'Processing...',
+                        complete: progress.complete || false,
+                        error: progress.error
+                    };
+                    
+                    handleProgressUpdate(progressData);
+                    
+                    if (progress.complete || progress.error) {
+                        clearInterval(progressPollInterval);
+                        if (progress.error) {
+                            handleConversionError(progress.error);
+                        } else {
+                            handleConversionComplete({ project_id: projectId });
+                        }
+                    }
                 }
             }
         } catch (error) {
             console.error('Progress polling error:', error);
+            addLogEntry('Error fetching progress: ' + error.message, 'error');
         }
     }, 2000);
     
     // Initial fetch
-    fetch(`/api/progress/${taskId}`)
+    fetch(`/api/conversion-progress/${projectId}`)
         .then(res => res.json())
-        .then(data => handleProgressUpdate(data))
-        .catch(err => console.error('Error fetching progress:', err));
+        .then(result => {
+            if (result.status === 'success' && result.progress) {
+                const progress = result.progress;
+                const progressData = {
+                    progress: progress.percentage || 0,
+                    status: progress.stage || 'pending',
+                    status_message: progress.message || 'Processing...',
+                    complete: progress.complete || false
+                };
+                handleProgressUpdate(progressData);
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching initial progress:', err);
+            addLogEntry('Error fetching progress: ' + err.message, 'error');
+        });
 }
 
 function handleProgressUpdate(data) {
@@ -339,11 +389,14 @@ function handleConversionComplete(data) {
     
     showToast('Conversion completed successfully!', 'success');
     
+    // Get project_id from data or extract from URL
+    const projectId = data.project_id || data.file_id || window.location.pathname.split('/').pop();
+    
     // Save conversion result to state for download page
     if (typeof State !== 'undefined') {
         State.setConversionResult({
             finished: true,
-            file_id: data.file_id,
+            project_id: projectId,
             files_processed: filesProcessed,
             warnings: warningsCount,
             completed_at: new Date().toISOString()
@@ -352,8 +405,8 @@ function handleConversionComplete(data) {
     
     // Redirect to download page after delay
     setTimeout(() => {
-        if (data.file_id) {
-            window.location.href = `/download/${data.file_id}`;
+        if (projectId) {
+            window.location.href = `/download/${projectId}`;
         } else {
             window.location.href = '/';
         }
@@ -410,7 +463,10 @@ function handleRetry() {
     conversionStartTime = Date.now();
     filesProcessed = 0;
     warningsCount = 0;
-    startConversion();
+    
+    // Get project_id from URL
+    const projectId = window.location.pathname.split('/').pop();
+    startConversion(projectId);
 }
 
 function startTimer() {
@@ -480,37 +536,6 @@ function toggleLog() {
 }
 
 window.toggleLog = toggleLog;
-
-function simulateProgress() {
-    // Mock progress for demonstration
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += 2;
-        if (progress > 100) {
-            progress = 100;
-            clearInterval(interval);
-            handleConversionComplete({ file_id: 'mock' });
-            return;
-        }
-        
-        const mockData = {
-            progress: progress,
-            status: progress < 25 ? 'processing' : progress < 70 ? 'converting' : progress < 90 ? 'documenting' : 'finalizing',
-            status_message: progress < 25 ? 'Analyzing code structure...' : 
-                           progress < 70 ? 'Converting files...' : 
-                           progress < 90 ? 'Generating documentation...' : 
-                           'Finalizing package...',
-            files: Array.from({ length: Math.floor(progress / 10) }, (_, i) => ({
-                id: i,
-                name: `file${i + 1}.php`,
-                status: 'completed'
-            })),
-            warnings: Math.floor(progress / 20)
-        };
-        
-        handleProgressUpdate(mockData);
-    }, 500);
-}
 
 function escapeHtml(text) {
     const div = document.createElement('div');

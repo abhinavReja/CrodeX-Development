@@ -192,13 +192,13 @@ class FileManager:
             return 0
     
     def save_converted_files(self, project_path: str, 
-                            converted_files: Dict[str, str]) -> Path:
+                            converted_files) -> Path:
         """
         Save converted files to disk
         
         Args:
             project_path: Project directory path
-            converted_files: Dictionary of file paths to contents
+            converted_files: Dictionary of file paths to contents, or list of dicts with file info
             
         Returns:
             Path to converted files directory
@@ -208,17 +208,60 @@ class FileManager:
             converted_path = Path(project_path) / 'converted'
             converted_path.mkdir(parents=True, exist_ok=True)
             
-            # Save each file
-            for file_path, content in converted_files.items():
-                full_path = converted_path / file_path
-                
-                # Create parent directories
-                full_path.parent.mkdir(parents=True, exist_ok=True)
-                
-                # Write file
-                self.parser.write_file(full_path, content)
+            # Handle both dict and list formats
+            if isinstance(converted_files, list):
+                # Convert list of dicts to dict format
+                logger.warning("Received list instead of dict, converting...")
+                files_dict = {}
+                for file_info in converted_files:
+                    if isinstance(file_info, dict):
+                        # Get file path (prefer new_file_path, fallback to original_path)
+                        file_path = file_info.get('new_file_path') or file_info.get('original_path')
+                        file_content = file_info.get('converted_code')
+                        
+                        if file_path and file_content:
+                            # Normalize path
+                            file_path = file_path.lstrip('/\\').replace('\\', '/')
+                            files_dict[file_path] = file_content
+                converted_files = files_dict
             
-            logger.info(f"Saved {len(converted_files)} converted files to {converted_path}")
+            # Ensure converted_files is a dictionary
+            if not isinstance(converted_files, dict):
+                raise ValueError(f"converted_files must be a dictionary, got {type(converted_files)}")
+            
+            # Save each file
+            saved_count = 0
+            for file_path, content in converted_files.items():
+                try:
+                    # Normalize path (handle both relative and absolute paths)
+                    # Remove any leading slashes or dots
+                    normalized_path = file_path.lstrip('/\\').lstrip('.').lstrip('/\\')
+                    
+                    # Create full path
+                    full_path = converted_path / normalized_path
+                    
+                    # Security check: ensure path is within converted_path
+                    try:
+                        full_path.resolve().relative_to(converted_path.resolve())
+                    except ValueError:
+                        logger.warning(f"Invalid file path (outside converted directory): {file_path}")
+                        continue
+                    
+                    # Create parent directories
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Write file
+                    self.parser.write_file(full_path, content)
+                    saved_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error saving file {file_path}: {str(e)}")
+                    # Continue with other files even if one fails
+                    continue
+            
+            logger.info(f"Saved {saved_count} out of {len(converted_files)} converted files to {converted_path}")
+            if saved_count < len(converted_files):
+                logger.warning(f"Some files could not be saved: {len(converted_files) - saved_count} files failed")
             return converted_path
             
         except Exception as e:

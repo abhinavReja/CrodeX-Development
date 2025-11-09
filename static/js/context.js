@@ -11,9 +11,18 @@ const requirementInput = document.getElementById('requirement-input');
 const requirementsList = document.getElementById('requirements-list');
 const businessLogicInput = document.getElementById('business-logic');
 const submitBtn = document.getElementById('submit-btn');
-const fileId = document.getElementById('file-id').value;
+
+// Get project_id and file_id - will be set after DOM loads
+let fileId = null;
+let projectId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Get project_id and file_id from hidden inputs
+    const fileIdInput = document.getElementById('file-id');
+    const projectIdInput = document.getElementById('project-id');
+    fileId = fileIdInput ? fileIdInput.value : null;
+    projectId = projectIdInput ? projectIdInput.value : fileId;  // Use project_id if available, fallback to file_id
+    
     setupForm();
     setupFeatureInput();
     setupRequirementInput();
@@ -131,8 +140,10 @@ function setupCharacterCounters() {
     businessLogicInput.addEventListener('input', () => {
         const count = businessLogicInput.value.length;
         document.getElementById('logic-count').textContent = count;
-        if (count > 1000) {
-            businessLogicInput.value = businessLogicInput.value.substring(0, 1000);
+        // Increase limit to 5000 characters for detailed business logic
+        if (count > 5000) {
+            businessLogicInput.value = businessLogicInput.value.substring(0, 5000);
+            document.getElementById('logic-count').textContent = 5000;
         }
         validateField('business-logic');
     });
@@ -193,28 +204,145 @@ function loadPreviousContext() {
 
 async function loadAutoSuggestions() {
     try {
-        const response = await fetch(`/api/file-analysis/${fileId}`);
+        // Use project_id if available, otherwise file_id
+        const id = projectId || fileId;
+        if (!id) {
+            console.warn('No project ID or file ID available for auto-suggestions');
+            return;
+        }
+        
+        // Show loading indicator
+        const purposeField = document.getElementById('purpose');
+        if (purposeField && !purposeField.value) {
+            purposeField.placeholder = 'Analyzing project...';
+        }
+        
+        const response = await fetch(`/api/file-analysis/${id}`);
         if (response.ok) {
             const data = await response.json();
-            if (data.analysis) {
-                // Auto-fill purpose from analysis notes if available
-                if (data.analysis.notes && !purposeInput.value) {
-                    // Extract purpose from notes (first sentence)
-                    const firstSentence = data.analysis.notes.split('.')[0];
-                    if (firstSentence) {
-                        purposeInput.value = firstSentence.trim();
+            if (data.status === 'success' && data.analysis) {
+                // Auto-fill purpose from analysis
+                if (!purposeInput.value) {
+                    if (data.analysis.notes) {
+                        // Use notes as purpose
+                        purposeInput.value = data.analysis.notes.trim();
+                        document.getElementById('purpose-count').textContent = purposeInput.value.length;
+                    } else if (data.analysis.framework) {
+                        // Create purpose from framework detection
+                        purposeInput.value = `${data.analysis.framework} application - ${data.analysis.framework} project ready for conversion`;
                         document.getElementById('purpose-count').textContent = purposeInput.value.length;
                     }
                 }
                 
                 // Auto-suggest features based on dependencies
-                if (data.analysis.dependencies && data.analysis.dependencies.length > 0) {
-                    // Could suggest features based on dependencies
+                if (data.analysis.dependencies && data.analysis.dependencies.length > 0 && features.length === 0) {
+                    // Suggest features based on common dependencies
+                    const dependencyFeatures = {
+                        'express': 'REST API',
+                        'mongodb': 'Database Integration',
+                        'mysql': 'Database Integration',
+                        'redis': 'Caching',
+                        'jwt': 'User Authentication',
+                        'passport': 'User Authentication',
+                        'bcrypt': 'Password Security',
+                        'nodemailer': 'Email Notifications',
+                        'socket.io': 'Real-time Communication',
+                        'multer': 'File Upload',
+                        'validator': 'Input Validation',
+                        'cors': 'Cross-Origin Support'
+                    };
+                    
+                    data.analysis.dependencies.forEach(dep => {
+                        const depLower = dep.toLowerCase();
+                        for (const [key, feature] of Object.entries(dependencyFeatures)) {
+                            if (depLower.includes(key) && !features.includes(feature)) {
+                                features.push(feature);
+                            }
+                        }
+                    });
+                    
+                    if (features.length > 0) {
+                        renderFeatures();
+                    }
+                }
+                
+                // Apply suggestions if available
+                if (data.suggestions) {
+                    if (data.suggestions.description && !purposeInput.value) {
+                        purposeInput.value = data.suggestions.description;
+                        document.getElementById('purpose-count').textContent = purposeInput.value.length;
+                    }
+                    
+                    if (data.suggestions.features && Array.isArray(data.suggestions.features) && features.length === 0) {
+                        features = data.suggestions.features.slice();
+                        renderFeatures();
+                    }
+                    
+                    // Auto-fill business_logic from suggestions (priority) or from analysis
+                    if (!businessLogicInput.value || businessLogicInput.value.trim().length < 50) {
+                        if (data.suggestions.business_logic && data.suggestions.business_logic.trim().length > 50) {
+                            businessLogicInput.value = data.suggestions.business_logic.trim();
+                            document.getElementById('logic-count').textContent = businessLogicInput.value.length;
+                        } else if (data.analysis.business_logic && data.analysis.business_logic.trim().length > 50) {
+                            businessLogicInput.value = data.analysis.business_logic.trim();
+                            document.getElementById('logic-count').textContent = businessLogicInput.value.length;
+                        } else if (data.analysis.notes && data.analysis.notes.trim().length > 50) {
+                            // Use notes as fallback for business logic
+                            businessLogicInput.value = `Based on analysis: ${data.analysis.notes}. The application implements core functionality through its code structure and business rules.`;
+                            document.getElementById('logic-count').textContent = businessLogicInput.value.length;
+                        }
+                    }
+                } else if (data.analysis) {
+                    // If no suggestions, try to use analysis data directly
+                    if (!businessLogicInput.value || businessLogicInput.value.trim().length < 50) {
+                        if (data.analysis.business_logic && data.analysis.business_logic.trim().length > 50) {
+                            businessLogicInput.value = data.analysis.business_logic.trim();
+                            document.getElementById('logic-count').textContent = businessLogicInput.value.length;
+                        } else if (data.analysis.notes && data.analysis.notes.trim().length > 50) {
+                            businessLogicInput.value = `Based on analysis: ${data.analysis.notes}. The application implements core functionality through its code structure and business rules.`;
+                            document.getElementById('logic-count').textContent = businessLogicInput.value.length;
+                        }
+                    }
+                }
+                
+                // Auto-select framework if detected
+                if (data.analysis.framework) {
+                    const frameworkMap = {
+                        'Laravel': 'laravel',
+                        'Django': 'django',
+                        'Flask': 'flask',
+                        'Express.js': 'express',
+                        'Express': 'express',
+                        'Spring Boot': 'spring',
+                        'ASP.NET Core': 'aspnet'
+                    };
+                    
+                    const frameworkKey = frameworkMap[data.analysis.framework];
+                    if (frameworkKey) {
+                        const frameworkRadio = document.getElementById(frameworkKey);
+                        if (frameworkRadio && !document.querySelector('input[name="target-framework"]:checked')) {
+                            frameworkRadio.checked = true;
+                            updateFrameworkSelection();
+                        }
+                    }
+                }
+                
+                // Show success message
+                if (purposeInput.value || features.length > 0) {
+                    showToast('Analysis complete! Form auto-filled with suggestions.', 'success');
                 }
             }
+        } else {
+            console.error('Error loading auto-suggestions:', response.status, response.statusText);
         }
     } catch (error) {
         console.error('Error loading auto-suggestions:', error);
+    } finally {
+        // Reset placeholder
+        const purposeField = document.getElementById('purpose');
+        if (purposeField && purposeField.placeholder === 'Analyzing project...') {
+            purposeField.placeholder = 'Describe what your application does (e.g., E-commerce platform for selling products)';
+        }
     }
 }
 
@@ -271,9 +399,9 @@ function validateField(fieldName) {
         errorMessage = 'Purpose must be less than 500 characters';
     }
     
-    if (fieldName === 'business-logic' && field.value.length > 1000) {
+    if (fieldName === 'business-logic' && field.value.length > 5000) {
         isValid = false;
-        errorMessage = 'Business logic must be less than 1000 characters';
+        errorMessage = 'Business logic must be less than 5000 characters';
     }
     
     if (errorSpan) {
@@ -355,13 +483,19 @@ async function handleSubmit(e) {
     }
     
     const contextData = {
-        file_id: fileId,
         purpose: purposeInput.value.trim(),
         features: features,
         business_logic: businessLogicInput.value.trim(),
         requirements: requirements,
         target_framework: targetFrameworkEl.value
     };
+    
+    // Include project_id if available (preferred), otherwise file_id for backward compatibility
+    if (projectId) {
+        contextData.project_id = projectId;
+    } else if (fileId) {
+        contextData.file_id = fileId;
+    }
     
     // Store in state
     State.setContext(contextData);
@@ -417,7 +551,8 @@ function escapeHtml(text) {
 }
 
 function goBack() {
-    window.location.href = `/analysis/${fileId}`;
+    // Go back to upload page
+    window.location.href = '/upload';
 }
 
 window.goBack = goBack;

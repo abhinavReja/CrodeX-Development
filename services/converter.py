@@ -19,7 +19,7 @@ class ProjectConverter:
         """Initialize with Gemini API"""
         self.gemini = GeminiService(gemini_api_key)
         self.analyzer = FrameworkAnalyzer()
-        logger.info("✅ ProjectConverter initialized with Gemini API")
+        logger.info("ProjectConverter initialized with Gemini API")
     
     def full_conversion_pipeline(
         self,
@@ -90,7 +90,7 @@ class ProjectConverter:
                 converted_files=converted_files
             )
             
-            logger.info("✅ Conversion pipeline complete")
+            logger.info("Conversion pipeline complete")
             
             return {
                 'status': 'success',
@@ -106,7 +106,7 @@ class ProjectConverter:
             }
             
         except Exception as e:
-            logger.error(f"❌ Conversion pipeline failed: {str(e)}")
+            logger.error(f"Conversion pipeline failed: {str(e)}")
             raise
     
     def _create_conversion_summary(

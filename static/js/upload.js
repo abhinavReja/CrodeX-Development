@@ -165,15 +165,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Fetch ZIP structure from API
-    async function fetchZipStructure(fileId) {
+    async function fetchZipStructure(projectId) {
+        if (!projectId) {
+            console.error('No project ID provided for ZIP structure');
+            return;
+        }
+        
         structureLoading.style.display = 'block';
         structureList.innerHTML = '';
 
         try {
-            const response = await fetch(`/api/zip-structure/${fileId}`);
+            const response = await fetch(`/api/zip-structure/${projectId}`);
             if (response.ok) {
                 const data = await response.json();
-                if (data.structure && data.structure.length > 0) {
+                if (data.status === 'success' && data.structure && data.structure.length > 0) {
                     displayZipStructure(data.structure);
                 } else {
                     structureList.innerHTML = '<p style="padding: 1rem; color: var(--gray-600);">No files found in ZIP archive</p>';
@@ -181,9 +186,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else {
                 console.error('Error fetching ZIP structure:', response.statusText);
+                // Don't show error to user, just log it
             }
         } catch (error) {
             console.error('Error fetching ZIP structure:', error);
+            // Don't show error to user, just log it
         } finally {
             structureLoading.style.display = 'none';
         }
@@ -298,45 +305,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load complete
         xhr.addEventListener('load', function() {
-            if (xhr.status === 200) {
+            // Handle both 200 (OK) and 201 (Created) as success
+            if (xhr.status === 200 || xhr.status === 201) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    updateUploadProgress(100, 'Upload complete!');
                     
-                    // Display ZIP structure if available
-                    if (response.structure && response.structure.length > 0) {
-                        displayZipStructure(response.structure);
-                    } else if (response.file_id) {
-                        // Fetch structure from API
-                        fetchZipStructure(response.file_id);
+                    // Check if response indicates success
+                    if (response.status === 'success') {
+                        updateUploadProgress(100, 'Upload complete!');
+                        showValidationSuccess('Project uploaded successfully!');
+                        
+                        const projectId = response.project_id;
+                        
+                        // Fetch and display ZIP structure
+                        if (projectId) {
+                            fetchZipStructure(projectId);
+                        }
+                        
+                        // Change button to "Continue" and enable it
+                        uploadBtn.textContent = 'Continue & Analyze';
+                        uploadBtn.disabled = false;
+                        uploadBtn.type = 'button'; // Change to button to prevent form submission
+                        uploadBtn.onclick = async function(e) {
+                            e.preventDefault();
+                            await handleContinueAfterUpload(projectId, response.redirect_url);
+                        };
+                    } else {
+                        // Response has status: 'error'
+                        showValidationErrors([response.message || 'Upload failed. Please try again.']);
+                        resetUploadState();
                     }
-                    
-                    // Auto-redirect to analysis page after a short delay
-                    setTimeout(function() {
-                        if (response.redirect_url) {
-                            window.location.href = response.redirect_url;
-                        } else if (response.file_id) {
-                            window.location.href = `/analysis/${response.file_id}`;
-                        }
-                    }, 1000);
-                    
-                    // Also enable continue button as fallback
-                    uploadBtn.textContent = 'Continue to Analysis';
-                    uploadBtn.disabled = false;
-                    uploadBtn.onclick = function(e) {
-                        e.preventDefault();
-                        if (response.redirect_url) {
-                            window.location.href = response.redirect_url;
-                        } else if (response.file_id) {
-                            window.location.href = `/analysis/${response.file_id}`;
-                        }
-                    };
                 } catch (error) {
                     console.error('Error parsing response:', error);
                     showValidationErrors(['Upload failed. Please try again.']);
                     resetUploadState();
                 }
             } else {
+                // HTTP error status (4xx, 5xx)
                 try {
                     const error = JSON.parse(xhr.responseText);
                     showValidationErrors([error.message || 'Upload failed. Please try again.']);
@@ -368,7 +373,76 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetUploadState() {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Upload File';
+        uploadBtn.type = 'submit'; // Reset to submit button
+        uploadBtn.onclick = null; // Remove custom onclick handler
         hideUploadProgress();
+    }
+    
+    // Handle continue button click after upload
+    async function handleContinueAfterUpload(projectId, redirectUrl) {
+        if (!projectId) {
+            showValidationErrors(['Project ID not found. Please upload again.']);
+            return;
+        }
+        
+        // Disable button and show loading
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Analyzing...';
+        updateUploadProgress(0, 'Starting analysis...');
+        
+        try {
+            // Trigger analysis
+            const analysisResponse = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (analysisResponse.ok) {
+                const analysisData = await analysisResponse.json();
+                updateUploadProgress(50, 'Analysis complete!');
+                
+                // Small delay to show progress
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Redirect to context form
+                updateUploadProgress(100, 'Redirecting...');
+                setTimeout(function() {
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else {
+                        window.location.href = `/context/${projectId}`;
+                    }
+                }, 300);
+            } else {
+                // Analysis failed, but still allow continuing to context form
+                console.warn('Analysis failed, but continuing to context form');
+                updateUploadProgress(100, 'Continuing...');
+                setTimeout(function() {
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else {
+                        window.location.href = `/context/${projectId}`;
+                    }
+                }, 300);
+            }
+        } catch (error) {
+            console.error('Error during analysis:', error);
+            // Even if analysis fails, allow user to continue to context form
+            showValidationSuccess('Upload complete! You can continue to provide context.');
+            updateUploadProgress(100, 'Ready');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Continue to Context Form';
+            uploadBtn.onclick = function(e) {
+                e.preventDefault();
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.href = `/context/${projectId}`;
+                }
+            };
+        }
     }
 
     // Close sidebar handler

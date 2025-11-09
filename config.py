@@ -26,8 +26,9 @@ class Config:
     # CORS configuration
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
     
-    # Claude API configuration
-    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    # Gemini API configuration (supports both GEMINI_API_KEY and ANTHROPIC_API_KEY for backward compatibility)
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '') or os.getenv('ANTHROPIC_API_KEY', '')
+    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')  # Kept for backward compatibility
     
     # Cleanup configuration
     CLEANUP_INTERVAL_HOURS = 2

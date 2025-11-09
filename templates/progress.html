@@ -183,7 +183,8 @@
 
 {% block extra_js %}
 <script>
-    const taskId = '{{ task_id }}';
+    // Make projectId globally available
+    window.projectId = '{{ project_id }}';
 </script>
 <script src="{{ url_for('static', filename='js/state.js') }}"></script>
 <script src="{{ url_for('static', filename='js/conversion.js') }}"></script>

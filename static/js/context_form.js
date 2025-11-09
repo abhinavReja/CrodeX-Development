@@ -4,7 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const contextTypeSelect = document.getElementById('context-type');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields');
     const contextForm = document.getElementById('context-form');
-    const fileId = document.getElementById('file-id').value;
+    // Get project_id or file_id from hidden input (backward compatibility)
+    const fileIdInput = document.getElementById('file-id');
+    const projectIdInput = document.getElementById('project-id');
+    const fileId = fileIdInput ? fileIdInput.value : null;
+    const projectId = projectIdInput ? projectIdInput.value : fileId;  // Use project_id if available, fallback to file_id
     const descriptionField = document.getElementById('description');
     const validationMessages = document.getElementById('validation-messages');
     const suggestionsBanner = document.getElementById('suggestions-banner');
@@ -91,11 +95,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load auto-suggestions from API
     async function loadAutoSuggestions() {
         try {
-            const response = await fetch(`/api/file-analysis/${fileId}`);
+            // Use project_id if available, otherwise file_id
+            const id = projectId || fileId;
+            if (!id) {
+                console.warn('No project ID or file ID available for auto-suggestions');
+                return;
+            }
+            
+            const response = await fetch(`/api/file-analysis/${id}`);
             if (response.ok) {
                 const data = await response.json();
-                autoSuggestions = data.suggestions || {};
-                displayAutoSuggestions(autoSuggestions);
+                if (data.status === 'success') {
+                    autoSuggestions = data.suggestions || {};
+                    displayAutoSuggestions(autoSuggestions);
+                }
+            } else {
+                console.error('Error loading auto-suggestions:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Error loading auto-suggestions:', error);

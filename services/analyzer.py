@@ -175,16 +175,29 @@ class FrameworkAnalyzer:
                 'tables': []
             }
             
-            # Generate notes
-            notes = f"Analyzed {len(files)} files. Framework: {best_framework} (confidence: {confidence}%)"
+            # Generate notes with more detail
+            notes_parts = [f"Analyzed {len(files)} files. Framework: {best_framework} (confidence: {confidence}%)"]
+            if dependencies:
+                notes_parts.append(f"Found {len(dependencies)} dependencies")
+            if structure.get('components', {}).get('controllers'):
+                notes_parts.append(f"Detected {len(structure['components']['controllers'])} controllers")
+            if structure.get('components', {}).get('models'):
+                notes_parts.append(f"Detected {len(structure['components']['models'])} models")
+            
+            notes = ". ".join(notes_parts)
             
             result = {
-                'framework': best_framework,
+                'primary_framework': best_framework,  # Keep for backward compatibility
+                'framework': best_framework,  # Add framework key for consistency
                 'confidence': min(confidence, 100),
                 'structure': structure,
                 'dependencies': dependencies,
                 'database': database_info,
                 'notes': notes,
+                'file_stats': {
+                    'total_files': len(files),
+                    'total_size': sum(len(content) for content in files.values())
+                },
                 'all_scores': scores,
                 'file_count': len(files)
             }

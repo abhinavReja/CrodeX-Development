@@ -18,16 +18,27 @@ def validate_request(validator_class):
             
             # Validate based on request content type
             if request.is_json:
-                errors = validator.validate_json(request.get_json())
+                try:
+                    json_data = request.get_json() or {}
+                except Exception:
+                    json_data = {}
+                errors = validator.validate_json(json_data)
             elif request.files:
                 errors = validator.validate_files(request.files)
             else:
                 errors = validator.validate_form(request.form)
             
             if errors:
+                error_message = 'Validation failed'
+                if errors:
+                    # Use first error as main message for better UX
+                    error_message = errors[0] if isinstance(errors[0], str) else 'Validation failed'
+                    if len(errors) > 1:
+                        error_message += f' (and {len(errors) - 1} more error(s))'
+                
                 return jsonify({
                     'status': 'error',
-                    'message': 'Validation failed',
+                    'message': error_message,
                     'errors': errors
                 }), 400
             

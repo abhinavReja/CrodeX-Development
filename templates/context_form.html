@@ -17,8 +17,9 @@
 </section>
 
 <section class="context-form-section">
-    <form id="context-form" class="context-form" method="POST" action="{{ url_for('analysis.context_form', file_id=file_id) }}" novalidate>
+    <form id="context-form" class="context-form" method="POST" action="{{ url_for('analysis.context_form', project_id=project_id) }}" novalidate>
         <input type="hidden" name="file_id" id="file-id" value="{{ file_id }}">
+        <input type="hidden" name="project_id" id="project-id" value="{{ project_id }}">
         
         <!-- Project Purpose -->
         <div class="form-group">
@@ -73,12 +74,12 @@
             <textarea 
                 id="business-logic" 
                 name="business-logic" 
-                rows="6" 
-                placeholder="Describe the main business flows and logic (e.g., Users can browse products, add to cart, checkout with payment processing)"
+                rows="8" 
+                placeholder="Describe the main business flows and logic (e.g., Users can browse products, add to cart, checkout with payment processing). This will be auto-filled from analysis."
                 required
-                maxlength="1000"
+                maxlength="5000"
             ></textarea>
-            <span class="char-count"><span id="logic-count">0</span> / 1000</span>
+            <span class="char-count"><span id="logic-count">0</span> / 5000</span>
             <span class="field-error" id="business-logic-error"></span>
         </div>
 
@@ -162,9 +163,9 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-            <a href="{{ url_for('analysis.analysis_results', file_id=file_id) }}" class="btn btn-secondary">
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i>
-                Back to Analysis
+                Back to Upload
             </a>
             <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
                 Start Conversion

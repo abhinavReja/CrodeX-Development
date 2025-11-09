@@ -3,19 +3,28 @@
 /**
  * Load analysis data from API
  */
-async function loadAnalysis(fileId) {
+async function loadAnalysis(projectId) {
     try {
         showLoading('Loading analysis results...');
         
-        const response = await fetch(`/api/file-analysis/${fileId}`);
+        // Use project_id if provided, otherwise try to get from URL or state
+        const id = projectId || (typeof projectId !== 'undefined' ? projectId : 
+                     (typeof fileId !== 'undefined' ? fileId : 
+                      window.location.pathname.split('/').pop()));
+        
+        if (!id) {
+            throw new Error('No project ID available');
+        }
+        
+        const response = await fetch(`/api/file-analysis/${id}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        if (data.analysis) {
+        if (data.status === 'success' && data.analysis) {
             // Store analysis in state
-            State.setFileId(fileId);
+            State.setProjectId(id);
             State.setAnalysis(data.analysis);
             
             // Display analysis

@@ -1,7 +1,11 @@
 from middleware.validation import BaseValidator
 
 class ConversionValidator(BaseValidator):
-    """Validator for conversion requests"""
+    """Validator for conversion requests
+    
+    Note: target_framework is optional in request body since it can be retrieved
+    from session context. The route handler will validate it properly.
+    """
     
     SUPPORTED_FRAMEWORKS = [
         'Django', 'Flask', 'FastAPI',
@@ -13,15 +17,14 @@ class ConversionValidator(BaseValidator):
     def validate_json(self, data):
         errors = []
         
+        # Allow empty data - target_framework can come from session context
         if not data:
-            errors.append('No data provided')
-            return errors
+            return errors  # Empty data is OK, route will check session
         
-        # Required field
-        if 'target_framework' not in data:
-            errors.append('Missing required field: target_framework')
-        elif data['target_framework'] not in self.SUPPORTED_FRAMEWORKS:
-            errors.append(f'Unsupported target framework: {data["target_framework"]}')
-            errors.append(f'Supported frameworks: {", ".join(self.SUPPORTED_FRAMEWORKS)}')
+        # If target_framework is provided, validate it
+        if 'target_framework' in data and data['target_framework']:
+            if data['target_framework'] not in self.SUPPORTED_FRAMEWORKS:
+                errors.append(f'Unsupported target framework: {data["target_framework"]}')
+                errors.append(f'Supported frameworks: {", ".join(self.SUPPORTED_FRAMEWORKS)}')
         
         return errors
