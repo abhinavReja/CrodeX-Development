@@ -1,22 +1,116 @@
+{% extends "base.html" %}
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Flask Boilerplate</title>
-    <style>
-      body {font-family: Arial, sans-serif; margin: 2rem; background: #fafafa;}
-      h1 {color: #333;}
-      p {color: #555;}
-      .card {background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Welcome to your Flask Boilerplate!</h1>
-      <p>If you see this page, your Flask server is running correctly on <b>http://localhost:5000</b>.</p>
-      <p>Edit <code>templates/index.html</code> to change this content.</p>
+{% block title %}Home - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+<style>
+    /* Background image with Flask url_for for proper URL generation */
+    body.homepage::before {
+        background-image: url('{{ url_for("static", filename="images/artificial-intelligence-thought-process-thinking-human-brain-vector-illustration_531521-2275.jpg") }}');
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            Transform Your Code
+            <span class="gradient-text">Effortlessly</span>
+        </h1>
+        <p class="hero-subtitle">
+            Convert your project to any framework with AI-powered intelligence.
+            Upload, analyze, and convert in minutes.
+        </p>
+        <a href="{{ url_for('upload.upload') }}" class="btn btn-primary btn-large">
+            <i class="fas fa-rocket" aria-hidden="true"></i>
+            Get Started
+        </a>
     </div>
-  </body>
-</html>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <h2>Why Choose Our Converter?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-brain" aria-hidden="true"></i>
+            </div>
+            <h3>AI-Powered</h3>
+            <p>AI analyzes your code structure and maintains business logic</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt" aria-hidden="true"></i>
+            </div>
+            <h3>Secure & Private</h3>
+            <p>No permanent storage. Files auto-delete after conversion</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-bolt" aria-hidden="true"></i>
+            </div>
+            <h3>Fast Conversion</h3>
+            <p>Convert entire projects in minutes with real-time progress</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-code-branch" aria-hidden="true"></i>
+            </div>
+            <h3>Context-Aware</h3>
+            <p>Understands your project's purpose and maintains functionality</p>
+        </div>
+    </div>
+</section>
+
+<!-- Supported Frameworks Section -->
+<section id="supported" class="frameworks-section">
+    <h2>Supported Frameworks</h2>
+    <div class="frameworks-grid">
+        <div class="framework-badge coming-soon" title="Coming Soon">
+            <i class="fab fa-laravel" aria-hidden="true"></i>
+            <span>Laravel</span>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="framework-badge available">
+            <i class="fab fa-python" aria-hidden="true"></i>
+            <span>Django</span>
+            <span class="available-badge">Available</span>
+        </div>
+        <div class="framework-badge coming-soon" title="Coming Soon">
+            <i class="fab fa-node-js" aria-hidden="true"></i>
+            <span>Express.js</span>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="framework-badge available">
+            <i class="fab fa-python" aria-hidden="true"></i>
+            <span>Flask</span>
+            <span class="available-badge">Available</span>
+        </div>
+        <div class="framework-badge coming-soon" title="Coming Soon">
+            <i class="fab fa-symfony" aria-hidden="true"></i>
+            <span>Symfony</span>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="framework-badge available">
+            <i class="fab fa-java" aria-hidden="true"></i>
+            <span>Spring Boot</span>
+            <span class="available-badge">Available</span>
+        </div>
+        <div class="framework-badge coming-soon" title="Coming Soon">
+            <i class="fab fa-microsoft" aria-hidden="true"></i>
+            <span>ASP.NET Core</span>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="framework-badge coming-soon" title="Coming Soon">
+            <i class="fab fa-php" aria-hidden="true"></i>
+            <span>CodeIgniter</span>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

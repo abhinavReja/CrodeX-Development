@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Project Context - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/context.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="context-header">
+    <h1>Confirm Project Context</h1>
+    <p class="subtitle">Help us understand your project better for accurate conversion</p>
+    <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <p>Providing detailed context ensures the AI maintains your business logic and requirements during conversion.</p>
+    </div>
+</section>
+
+<section class="context-form-section">
+    <form id="context-form" class="context-form" method="POST" action="{{ url_for('analysis.context_form', project_id=project_id) }}" novalidate>
+        <input type="hidden" name="file_id" id="file-id" value="{{ file_id }}">
+        <input type="hidden" name="project_id" id="project-id" value="{{ project_id }}">
+        
+        <!-- Project Purpose -->
+        <div class="form-group">
+            <label for="purpose">
+                <i class="fas fa-bullseye"></i>
+                Project Purpose *
+            </label>
+            <textarea 
+                id="purpose" 
+                name="purpose" 
+                rows="4" 
+                placeholder="Describe what your application does (e.g., E-commerce platform for selling products)"
+                required
+                maxlength="500"
+            ></textarea>
+            <span class="char-count"><span id="purpose-count">0</span> / 500</span>
+            <span class="field-error" id="purpose-error"></span>
+        </div>
+
+        <!-- Key Features -->
+        <div class="form-group">
+            <label for="features">
+                <i class="fas fa-star"></i>
+                Key Features *
+            </label>
+            <div class="features-input">
+                <div id="features-tags" class="features-tags">
+                    <!-- Tags will be added here -->
+                </div>
+                <input 
+                    type="text" 
+                    id="feature-input" 
+                    placeholder="Type a feature and press Enter (e.g., user authentication)"
+                >
+            </div>
+            <div class="features-suggestions">
+                <span class="suggestion-label">Suggestions:</span>
+                <button type="button" class="suggestion-tag" onclick="addFeature('User Authentication')">User Authentication</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Payment Gateway')">Payment Gateway</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Email Notifications')">Email Notifications</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Admin Dashboard')">Admin Dashboard</button>
+            </div>
+            <span class="field-error" id="features-error"></span>
+        </div>
+
+        <!-- Business Logic -->
+        <div class="form-group">
+            <label for="business-logic">
+                <i class="fas fa-brain"></i>
+                Core Business Logic *
+            </label>
+            <textarea 
+                id="business-logic" 
+                name="business-logic" 
+                rows="8" 
+                placeholder="Describe the main business flows and logic (e.g., Users can browse products, add to cart, checkout with payment processing). This will be auto-filled from analysis."
+                required
+                maxlength="5000"
+            ></textarea>
+            <span class="char-count"><span id="logic-count">0</span> / 5000</span>
+            <span class="field-error" id="business-logic-error"></span>
+        </div>
+
+        <!-- Target Framework Selection -->
+        <div class="form-group">
+            <label>
+                <i class="fas fa-code-branch"></i>
+                Convert To *
+            </label>
+            <div class="framework-selector">
+                <div class="framework-option" data-framework="Django">
+                    <input type="radio" name="target-framework" id="django" value="Django" required>
+                    <label for="django">
+                        <i class="fab fa-python"></i>
+                        <span>Django</span>
+                        <small>Python Web Framework</small>
+                        <span class="available-indicator">Available</span>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Flask">
+                    <input type="radio" name="target-framework" id="flask" value="Flask">
+                    <label for="flask">
+                        <i class="fab fa-python"></i>
+                        <span>Flask</span>
+                        <small>Lightweight Python</small>
+                        <span class="available-indicator">Available</span>
+                    </label>
+                </div>
+                <div class="framework-option coming-soon" data-framework="Laravel" title="Coming Soon">
+                    <input type="radio" name="target-framework" id="laravel" value="Laravel" disabled>
+                    <label for="laravel">
+                        <i class="fab fa-laravel"></i>
+                        <span>Laravel</span>
+                        <small>PHP Framework</small>
+                        <span class="coming-soon-indicator">Coming Soon</span>
+                    </label>
+                </div>
+                <div class="framework-option coming-soon" data-framework="Express.js" title="Coming Soon">
+                    <input type="radio" name="target-framework" id="express" value="Express.js" disabled>
+                    <label for="express">
+                        <i class="fab fa-node-js"></i>
+                        <span>Express.js</span>
+                        <small>Node.js Framework</small>
+                        <span class="coming-soon-indicator">Coming Soon</span>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Spring Boot">
+                    <input type="radio" name="target-framework" id="spring" value="Spring Boot">
+                    <label for="spring">
+                        <i class="fab fa-java"></i>
+                        <span>Spring Boot</span>
+                        <small>Java Framework</small>
+                        <span class="available-indicator">Available</span>
+                    </label>
+                </div>
+                <div class="framework-option coming-soon" data-framework="ASP.NET Core" title="Coming Soon">
+                    <input type="radio" name="target-framework" id="aspnet" value="ASP.NET Core" disabled>
+                    <label for="aspnet">
+                        <i class="fab fa-microsoft"></i>
+                        <span>ASP.NET Core</span>
+                        <small>.NET Framework</small>
+                        <span class="coming-soon-indicator">Coming Soon</span>
+                    </label>
+                </div>
+            </div>
+            <span class="field-error" id="target-framework-error"></span>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Upload
+            </a>
+            <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
+                Start Conversion
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- Example Context -->
+<section class="example-section">
+    <h3>
+        <i class="fas fa-lightbulb"></i>
+        Need Help? Here's an Example
+    </h3>
+    <div class="example-card">
+        <div class="example-header">
+            <strong>E-commerce Platform Example</strong>
+            <button class="btn-link" type="button" onclick="fillExampleContext()">
+                Use This Example
+            </button>
+        </div>
+        <div class="example-content">
+            <p><strong>Purpose:</strong> Online marketplace for buying and selling electronics</p>
+            <p><strong>Features:</strong> User authentication, Product catalog, Shopping cart, Payment processing, Order tracking</p>
+            <p><strong>Business Logic:</strong> Users can register, browse products by category, add items to cart, checkout with multiple payment options, and track their orders. Admin can manage products and view sales analytics.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/context.js') }}"></script>
+{% endblock %}

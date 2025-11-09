@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Converting Project - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conversion.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="conversion-header">
+    <div class="conversion-animation">
+        <div class="source-icon" id="source-icon">
+            <i class="fab fa-laravel"></i>
+        </div>
+        <div class="conversion-arrow">
+            <i class="fas fa-arrow-right"></i>
+            <div class="progress-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="target-icon" id="target-icon">
+            <i class="fab fa-python"></i>
+        </div>
+    </div>
+    <h1>Converting Your Project</h1>
+    <p class="subtitle">AI is analyzing and converting your code...</p>
+</section>
+
+<!-- Main Progress -->
+<section class="main-progress-section">
+    <div class="progress-card">
+        <div class="progress-header">
+            <h2 id="current-stage">Analyzing Project Structure</h2>
+            <span id="overall-percent" class="percent">0%</span>
+        </div>
+        <div class="main-progress-bar">
+            <div id="main-progress-fill" class="progress-fill"></div>
+        </div>
+        <p id="current-message" class="progress-message">
+            Preparing conversion process...
+        </p>
+    </div>
+</section>
+
+<!-- Detailed Progress -->
+<section class="detailed-progress-section">
+    <div class="progress-stages">
+        <!-- Stage 1: Analysis -->
+        <div class="stage-item" id="stage-analysis">
+            <div class="stage-icon pending">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="stage-content">
+                <h3>Deep Analysis</h3>
+                <p>Analyzing code structure and dependencies</p>
+                <div class="stage-progress">
+                    <div class="stage-progress-bar">
+                        <div class="stage-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 2: Conversion -->
+        <div class="stage-item" id="stage-conversion">
+            <div class="stage-icon pending">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <div class="stage-content">
+                <h3>Code Conversion</h3>
+                <p id="conversion-detail">Converting files...</p>
+                <div class="stage-progress">
+                    <div class="stage-progress-bar">
+                        <div class="stage-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 3: Documentation -->
+        <div class="stage-item" id="stage-documentation">
+            <div class="stage-icon pending">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stage-content">
+                <h3>Documentation</h3>
+                <p>Generating migration guide</p>
+                <div class="stage-progress">
+                    <div class="stage-progress-bar">
+                        <div class="stage-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 4: Finalization -->
+        <div class="stage-item" id="stage-finalization">
+            <div class="stage-icon pending">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="stage-content">
+                <h3>Finalization</h3>
+                <p>Preparing download package</p>
+                <div class="stage-progress">
+                    <div class="stage-progress-bar">
+                        <div class="stage-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics -->
+<section class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="stat-content">
+                <h4 id="files-processed">0</h4>
+                <p>Files Processed</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h4 id="time-elapsed">0:00</h4>
+                <p>Time Elapsed</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <h4 id="warnings-count">0</h4>
+                <p>Warnings</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Log -->
+<section class="log-section">
+    <div class="log-card">
+        <div class="log-header">
+            <h3>
+                <i class="fas fa-terminal"></i>
+                Conversion Log
+            </h3>
+            <button class="btn-icon" onclick="toggleLog()" title="Expand/Collapse log">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        <div id="conversion-log" class="conversion-log">
+            <!-- Log entries will be added here -->
+        </div>
+    </div>
+</section>
+
+<!-- Error Display -->
+<div class="error-container" id="error-container" style="display: none;">
+    <div class="error-alert" id="error-alert">
+        <div class="error-header">
+            <span class="error-icon"><i class="fas fa-exclamation-triangle"></i></span>
+            <strong>Conversion Error</strong>
+        </div>
+        <div class="error-message" id="error-message"></div>
+        <div class="error-details" id="error-details"></div>
+        <div class="error-actions">
+            <button type="button" class="btn btn-primary" id="retry-btn">Retry</button>
+            <button type="button" class="btn btn-secondary" id="cancel-error-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Make projectId globally available
+    window.projectId = '{{ project_id }}';
+</script>
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
+{% endblock %}
