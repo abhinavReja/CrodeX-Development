@@ -14,6 +14,13 @@ def validate_request(validator_class):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # Log validation attempt
+            from flask import current_app
+            try:
+                current_app.logger.debug(f"Validation decorator called for {f.__name__}")
+            except:
+                pass
+            
             validator = validator_class()
             
             # Validate based on request content type
@@ -36,11 +43,22 @@ def validate_request(validator_class):
                     if len(errors) > 1:
                         error_message += f' (and {len(errors) - 1} more error(s))'
                 
+                try:
+                    current_app.logger.warning(f"Validation failed for {f.__name__}: {errors}")
+                except:
+                    pass
+                
                 return jsonify({
                     'status': 'error',
                     'message': error_message,
                     'errors': errors
                 }), 400
+            
+            # Validation passed, proceed
+            try:
+                current_app.logger.debug(f"Validation passed for {f.__name__}, calling function")
+            except:
+                pass
             
             return f(*args, **kwargs)
         

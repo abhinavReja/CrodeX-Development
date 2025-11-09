@@ -129,19 +129,25 @@ async function startConversion(projectId) {
                     addLogEntry('Conversion already completed', 'success');
                     handleConversionComplete({ project_id: projectId });
                     return;
-                } else if (progress.percentage > 0) {
+                } else if (progress.percentage > 0 && progress.percentage < 100) {
+                    // Only skip if conversion is actually in progress (not just initialized)
                     addLogEntry('Conversion already in progress', 'info');
                     startProgressPolling(projectId);
                     return;
                 }
+                // If progress is 0 or undefined, proceed to start conversion
             }
         }
     } catch (error) {
         console.error('Error checking conversion status:', error);
+        // Continue to start conversion even if status check fails
     }
     
     // Auto-start conversion if context is confirmed
     try {
+        addLogEntry('Sending conversion request to server...', 'info');
+        console.log('Starting conversion for project:', projectId);
+        
         // Trigger conversion start (target_framework is in session context)
         const response = await fetch('/api/convert', {
             method: 'POST',
@@ -151,15 +157,27 @@ async function startConversion(projectId) {
             body: JSON.stringify({})  // Target framework is in session context
         });
         
+        console.log('Conversion response status:', response.status, response.statusText);
+        
         if (response.ok) {
             const result = await response.json();
-            addLogEntry('Conversion process started', 'success');
-            // Start tracking progress
+            console.log('Conversion started successfully:', result);
+            addLogEntry('Conversion process started successfully', 'success');
+            // Start tracking progress immediately
             startProgressPolling(projectId);
         } else {
-            const errorData = await response.json();
-            addLogEntry('Error starting conversion: ' + (errorData.message || 'Unknown error'), 'error');
-            handleConversionError(errorData.message || 'Conversion failed to start');
+            // Try to get error message
+            let errorMessage = 'Unknown error';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorData.error || 'Unknown error';
+                console.error('Conversion failed:', errorData);
+            } catch (e) {
+                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                console.error('Failed to parse error response:', e);
+            }
+            addLogEntry('Error starting conversion: ' + errorMessage, 'error');
+            handleConversionError(errorMessage || 'Conversion failed to start');
         }
     } catch (error) {
         console.error('Error starting conversion:', error);

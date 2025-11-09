@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 import logging
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -729,3 +731,89 @@ class FrameworkAnalyzer:
             notes.append("📚 Git repository detected.")
         
         return " ".join(notes)
+    def detect_framework(self, files: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Heuristic detection based on the in-memory files dict.
+        Returns: {"framework": <normalized>, "confidence": int, "scores": {...}}
+        """
+        try:
+            file_paths = list(files.keys())
+            scores = {}
+
+            # Reuse existing scoring helper against the in-memory files dict
+            for framework, patterns in self.FRAMEWORK_PATTERNS.items():
+                score = self._calculate_framework_score_from_files(file_paths, files, patterns)
+                scores[framework] = score
+
+            # Best match
+            if scores:
+                best_framework = max(scores, key=scores.get)
+                confidence = int(scores[best_framework])
+            else:
+                best_framework = 'Unknown'
+                confidence = 0
+
+            # Normalize to identifiers other services expect
+            norm_map = {
+                'Spring Boot': 'spring-boot',
+                'Express.js': 'express',
+                'Flask': 'flask',
+                'Django': 'django',
+                'Laravel': 'laravel',
+                'Symfony': 'symfony',
+                'ASP.NET Core': 'aspnet-core',
+                'CodeIgniter': 'codeigniter',
+                'Unknown': 'unknown',
+            }
+            normalized = norm_map.get(best_framework, best_framework.lower().replace(' ', '-'))
+
+            return {
+                "framework": normalized,
+                "confidence": min(confidence, 100),
+                "scores": scores
+            }
+        except Exception as e:
+            logger.error(f"detect_framework failed: {e}")
+            return {"framework": "unknown", "confidence": 0, "scores": {}}
+
+    def generate_conversion_summary(
+        self,
+        converted_files: List[Dict[str, Any]],
+        source_framework: str,
+        target_framework: str
+    ) -> str:
+        """
+        Human-friendly summary of conversion results: counts, deps, build systems, etc.
+        """
+        total = len(converted_files or [])
+        ok = sum(1 for x in (converted_files or []) if x.get("converted_code"))
+
+        deps = set()
+        tree_adds = set()
+        build_systems = set()
+        aux_count = 0
+        warnings = []
+
+        for item in (converted_files or []):
+            for d in item.get("dependencies", []) or []:
+                deps.add(d)
+            for t in item.get("project_tree_additions", []) or []:
+                tree_adds.add(t)
+            if item.get("build_system"):
+                build_systems.add(item["build_system"])
+            aux_count += len(item.get("auxiliary_files", []) or [])
+            for w in item.get("warnings", []) or []:
+                warnings.append(w)
+
+        lines = [
+            f"Source framework: {source_framework or 'unknown'}",
+            f"Target framework: {target_framework or 'unknown'}",
+            f"Files converted: {ok}/{total}",
+            f"Build systems referenced: {', '.join(sorted(build_systems)) or 'none'}",
+            f"Unique dependencies: {', '.join(sorted(deps)) or 'none'}",
+            f"Tree additions reported: {len(tree_adds)}",
+            f"Auxiliary files produced: {aux_count}",
+        ]
+        if warnings:
+            lines.append(f"Warnings (first 5): " + "; ".join(warnings[:5]))
+        return "\n".join(lines)
