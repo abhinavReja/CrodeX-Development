@@ -1,50 +1,85 @@
-from flask import jsonify
-import logging
-
-logger = logging.getLogger(__name__)
+from flask import jsonify, current_app
+from werkzeug.exceptions import HTTPException
+import traceback
 
 def register_error_handlers(app):
-    """Register error handlers for the application"""
-    
-    @app.errorhandler(404)
-    def not_found(error):
-        """Handle 404 errors"""
-        return jsonify({
-            'error': 'Not Found',
-            'message': 'The requested resource was not found'
-        }), 404
+    """Register application error handlers"""
     
     @app.errorhandler(400)
-    def bad_request(error):
-        """Handle 400 errors"""
+    def bad_request(e):
+        """Handle 400 Bad Request"""
         return jsonify({
-            'error': 'Bad Request',
-            'message': str(error.description) if hasattr(error, 'description') else 'Invalid request'
+            'status': 'error',
+            'code': 400,
+            'message': 'Bad request',
+            'details': str(e)
         }), 400
     
-    @app.errorhandler(413)
-    def request_entity_too_large(error):
-        """Handle file too large errors"""
+    @app.errorhandler(401)
+    def unauthorized(e):
+        """Handle 401 Unauthorized"""
         return jsonify({
-            'error': 'File Too Large',
-            'message': 'The uploaded file exceeds the maximum allowed size'
+            'status': 'error',
+            'code': 401,
+            'message': 'Unauthorized'
+        }), 401
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        """Handle 403 Forbidden"""
+        return jsonify({
+            'status': 'error',
+            'code': 403,
+            'message': 'Access forbidden'
+        }), 403
+    
+    @app.errorhandler(404)
+    def not_found(e):
+        """Handle 404 Not Found"""
+        return jsonify({
+            'status': 'error',
+            'code': 404,
+            'message': 'Resource not found'
+        }), 404
+    
+    @app.errorhandler(413)
+    def request_entity_too_large(e):
+        """Handle 413 Payload Too Large"""
+        return jsonify({
+            'status': 'error',
+            'code': 413,
+            'message': 'File too large. Maximum size is 100MB.'
         }), 413
     
     @app.errorhandler(500)
-    def internal_error(error):
-        """Handle 500 errors"""
-        logger.error(f'Internal server error: {error}', exc_info=True)
+    def internal_server_error(e):
+        """Handle 500 Internal Server Error"""
+        current_app.logger.error(f"Internal server error: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        
         return jsonify({
-            'error': 'Internal Server Error',
-            'message': 'An unexpected error occurred'
+            'status': 'error',
+            'code': 500,
+            'message': 'Internal server error',
+            'details': str(e) if app.debug else 'An unexpected error occurred'
         }), 500
     
     @app.errorhandler(Exception)
-    def handle_exception(error):
-        """Handle all other exceptions"""
-        logger.error(f'Unhandled exception: {error}', exc_info=True)
+    def handle_exception(e):
+        """Handle all unhandled exceptions"""
+        
+        # Pass through HTTP errors
+        if isinstance(e, HTTPException):
+            return e
+        
+        # Log the error
+        current_app.logger.error(f"Unhandled exception: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        
+        # Return generic error response
         return jsonify({
-            'error': 'Internal Server Error',
-            'message': str(error)
+            'status': 'error',
+            'code': 500,
+            'message': 'An unexpected error occurred',
+            'details': str(e) if app.debug else None
         }), 500
-

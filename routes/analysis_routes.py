@@ -1,107 +1,220 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-import uuid
-from datetime import datetime
-import os
-import sys
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Import shared storage
-from storage import files, tasks
+from flask import Blueprint, request, jsonify, session, current_app
+from schemas.context_schema import ContextValidator
+from middleware.validation import validate_request
+from services.gemini_api import GeminiService
+from services.analyzer import FrameworkAnalyzer
 
 analysis_bp = Blueprint('analysis', __name__)
-api_analysis_bp = Blueprint('api_analysis', __name__)
 
-@analysis_bp.route('/context/<file_id>', methods=['GET', 'POST'])
-def context_form(file_id):
-    """Handle context form - Template route"""
-    if request.method == 'GET':
-        if file_id not in files:
-            flash('File not found', 'error')
-            return redirect(url_for('upload.upload'))
-        return render_template('context_form.html', file_id=file_id)
+@analysis_bp.route('/analyze', methods=['POST'])
+def analyze_project():
+    """
+    Analyze uploaded project to detect framework
     
-    # Handle form submission
-    data = request.get_json() if request.is_json else request.form.to_dict()
+    Response:
+        {
+            "status": "success",
+            "project_id": "uuid",
+            "analysis": {
+                "framework": "Laravel",
+                "confidence": 95,
+                "structure": {...},
+                "suggestions": [...]
+            }
+        }
+    """
     
-    # Generate task ID
-    task_id = str(uuid.uuid4())
-    tasks[task_id] = {
-        'id': task_id,
-        'file_id': file_id,
-        'context': data,
-        'status': 'processing',
-        'progress': 0,
-        'step': 1,
-        'created_at': datetime.now().isoformat(),
-        'files': []
-    }
-    
-    if request.is_json:
+    try:
+        # Get project from session
+        project_id = session.get('project_id')
+        files_dict = session.get('files_dict')
+        
+        if not project_id or not files_dict:
+            return jsonify({
+                'status': 'error',
+                'message': 'No project found. Please upload a project first.'
+            }), 400
+        
+        # Initialize services
+        claude = ClaudeService(current_app.config['ANTHROPIC_API_KEY'])
+        analyzer = FrameworkAnalyzer()
+        
+        # Step 1: Quick local analysis
+        current_app.logger.info(f"Starting local analysis for {project_id}")
+        local_analysis = analyzer.analyze_structure(files_dict)
+        
+        # Step 2: Claude AI analysis
+        current_app.logger.info(f"Starting AI analysis for {project_id}")
+        ai_analysis = claude.analyze_project_structure(files_dict)
+        
+        # Combine results
+        combined_analysis = {
+            'framework': ai_analysis.get('framework', 'Unknown'),
+            'confidence': ai_analysis.get('confidence', 0),
+            'structure': ai_analysis.get('structure', {}),
+            'dependencies': ai_analysis.get('dependencies', []),
+            'database': ai_analysis.get('database', {}),
+            'local_detection': local_analysis.get('primary_framework'),
+            'file_stats': local_analysis.get('file_stats', {}),
+            'notes': ai_analysis.get('notes', '')
+        }
+        
+        # Store analysis in session
+        session['analysis'] = combined_analysis
+        session['analysis_timestamp'] = datetime.now().isoformat()
+        session.modified = True
+        
+        current_app.logger.info(f"Analysis completed: {project_id} - {combined_analysis['framework']}")
+        
         return jsonify({
-            'task_id': task_id,
-            'redirect_url': url_for('conversion.progress', task_id=task_id)
+            'status': 'success',
+            'project_id': project_id,
+            'analysis': combined_analysis
         }), 200
-    
-    return redirect(url_for('conversion.progress', task_id=task_id))
+        
+    except Exception as e:
+        current_app.logger.error(f"Analysis error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Analysis failed: {str(e)}'
+        }), 500
 
-# API routes (registered with /api prefix)
-@api_analysis_bp.route('/file-analysis/<file_id>', methods=['GET'])
-@api_analysis_bp.route('/analyze/<file_id>', methods=['GET'])
-def analyze_file(file_id):
-    """Return auto-suggestions based on file analysis - API route"""
-    if file_id not in files:
-        return jsonify({'error': 'File not found'}), 404
-    
-    # Mock suggestions (replace with actual analysis)
-    suggestions = {
-        'context_type': 'archive',
-        'description': 'ZIP archive file',
-        'features': ['extract', 'compress']
-    }
-    
-    return jsonify({'suggestions': suggestions}), 200
-
-@api_analysis_bp.route('/autocomplete/description', methods=['GET'])
-def autocomplete_description():
-    """Return autocomplete suggestions for description field - API route"""
-    query = request.args.get('q', '').lower()
-    
-    # Mock suggestions (replace with actual autocomplete logic)
-    suggestions = [
-        'ZIP archive containing multiple files',
-        'Archive file for processing',
-        'Compressed file archive'
-    ]
-    
-    filtered = [s for s in suggestions if query in s.lower()][:5]
-    return jsonify({'suggestions': filtered}), 200
-
-@api_analysis_bp.route('/confirm-context', methods=['POST'])
+@analysis_bp.route('/confirm-context', methods=['POST'])
+@validate_request(ContextValidator)
 def confirm_context():
-    """Confirm context and start conversion"""
-    data = request.get_json()
-    file_id = data.get('file_id')
+    """
+    Confirm or modify project context
     
-    if not file_id or file_id not in files:
-        return jsonify({'error': 'File not found'}), 404
+    Request:
+        {
+            "purpose": "E-commerce platform",
+            "features": ["user auth", "payment gateway"],
+            "business_logic": "Process orders and payments",
+            "requirements": ["maintain user sessions", "secure payments"]
+        }
+        
+    Response:
+        {
+            "status": "success",
+            "message": "Context confirmed",
+            "project_id": "uuid"
+        }
+    """
     
-    # Generate task ID
-    task_id = str(uuid.uuid4())
-    tasks[task_id] = {
-        'id': task_id,
-        'file_id': file_id,
-        'context': data,
-        'status': 'pending',
-        'progress': 0,
-        'step': 1,
-        'created_at': datetime.now().isoformat(),
-        'files': []
-    }
-    
-    return jsonify({
-        'task_id': task_id,
-        'status': 'pending'
-    }), 200
+    try:
+        # Get project from session
+        project_id = session.get('project_id')
+        
+        if not project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active project found'
+            }), 400
+        
+        # Get context from request
+        context_data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['purpose', 'features', 'business_logic']
+        for field in required_fields:
+            if field not in context_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+        
+        # Store context in session
+        session['project_context'] = {
+            'purpose': context_data['purpose'],
+            'features': context_data['features'],
+            'business_logic': context_data['business_logic'],
+            'requirements': context_data.get('requirements', []),
+            'confirmed_at': datetime.now().isoformat()
+        }
+        session.modified = True
+        
+        current_app.logger.info(f"Context confirmed for project: {project_id}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Context confirmed successfully',
+            'project_id': project_id
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Context confirmation error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Context confirmation failed: {str(e)}'
+        }), 500
 
+@analysis_bp.route('/status/<project_id>', methods=['GET'])
+def get_project_status(project_id):
+    """
+    Get current project status
+    
+    Response:
+        {
+            "status": "success",
+            "project": {
+                "id": "uuid",
+                "state": "uploaded|analyzed|converting|completed",
+                "progress": 75,
+                "current_step": "Converting files"
+            }
+        }
+    """
+    
+    try:
+        # Verify project belongs to session
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Get project state from session
+        state = 'uploaded'
+        progress = 0
+        current_step = 'Project uploaded'
+        
+        if session.get('analysis'):
+            state = 'analyzed'
+            progress = 33
+            current_step = 'Analysis completed'
+        
+        if session.get('project_context'):
+            state = 'context_confirmed'
+            progress = 50
+            current_step = 'Context confirmed'
+        
+        if session.get('conversion_progress'):
+            state = 'converting'
+            progress = session['conversion_progress']
+            current_step = session.get('conversion_step', 'Converting files')
+        
+        if session.get('conversion_complete'):
+            state = 'completed'
+            progress = 100
+            current_step = 'Conversion completed'
+        
+        return jsonify({
+            'status': 'success',
+            'project': {
+                'id': project_id,
+                'state': state,
+                'progress': progress,
+                'current_step': current_step,
+                'upload_timestamp': session.get('upload_timestamp'),
+                'analysis': session.get('analysis', {}).get('framework') if session.get('analysis') else None
+            }
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Status check error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Status check failed: {str(e)}'
+        }), 500
