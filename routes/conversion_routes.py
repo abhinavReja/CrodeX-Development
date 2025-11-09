@@ -30,14 +30,26 @@ def progress_status_api(task_id):
         return jsonify({'error': 'Task not found'}), 404
     
     task = tasks[task_id]
+    files = task.get('files', [])
+    
+    # Calculate files processed count
+    files_processed = len([f for f in files if f.get('status') == 'completed'])
+    
+    # Calculate warnings count
+    warnings = task.get('warnings', 0)
+    
     return jsonify({
         'task_id': task_id,
         'progress': task.get('progress', 0),
         'status': task.get('status', 'pending'),
         'status_message': task.get('status_message', 'Processing...'),
         'step': task.get('step', 1),
-        'files': task.get('files', []),
-        'file_id': task.get('file_id')
+        'files': files,
+        'file_id': task.get('file_id'),
+        'warnings': warnings,
+        'files_processed': files_processed,
+        'log_message': task.get('log_message'),
+        'log_level': task.get('log_level', 'info')
     }), 200
 
 @api_conversion_bp.route('/progress/stream/<task_id>')
@@ -51,12 +63,21 @@ def progress_stream(task_id):
                 break
             
             task = tasks[task_id]
+            files = task.get('files', [])
+            files_processed = len([f for f in files if f.get('status') == 'completed'])
+            warnings = task.get('warnings', 0)
+            
             data = {
                 'progress': task.get('progress', 0),
                 'status': task.get('status', 'pending'),
                 'status_message': task.get('status_message', 'Processing...'),
                 'step': task.get('step', 1),
-                'files': task.get('files', []),
+                'files': files,
+                'file_id': task.get('file_id'),
+                'warnings': warnings,
+                'files_processed': files_processed,
+                'log_message': task.get('log_message'),
+                'log_level': task.get('log_level', 'info')
             }
             
             yield f"data: {json.dumps(data)}\n\n"

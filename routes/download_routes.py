@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import shared storage
-from storage import files
+from storage import files, tasks
 
 download_bp = Blueprint('download', __name__)
 api_download_bp = Blueprint('api_download', __name__)
@@ -35,12 +35,27 @@ def download_file(file_id):
             flash('File content not available', 'error')
             return redirect(url_for('download.download_file', file_id=file_id))
     
+    # Find associated task for this file
+    task_info = None
+    for task_id, task in tasks.items():
+        if task.get('file_id') == file_id:
+            task_info = task
+            break
+    
+    # Calculate files processed count from task
+    files_processed = 0
+    if task_info:
+        task_files = task_info.get('files', [])
+        files_processed = len([f for f in task_files if f.get('status') == 'completed'])
+    
     # Otherwise, show download page
     return render_template('download.html', 
                          file_id=file_id,
                          original_name=file_info['name'],
                          processed_name=file_info['name'],
-                         file_size=file_info['size'])
+                         file_size=file_info['size'],
+                         files_processed=files_processed,
+                         task_info=task_info)
 
 # API routes (registered with /api prefix)
 @api_download_bp.route('/download/<file_id>', methods=['GET'])

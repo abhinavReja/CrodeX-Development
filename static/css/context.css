@@ -1,0 +1,524 @@
+/* Context Form Page Styles */
+
+/* Progress Steps (Optional - can be added to navbar or above form) */
+.nav-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.progress-step i {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.progress-step.active {
+    color: var(--primary-color);
+}
+
+.progress-step.active i {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.progress-step.completed {
+    color: var(--success-color);
+}
+
+.progress-step.completed i {
+    background: var(--success-color);
+    color: var(--white);
+}
+
+.progress-step span {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Context Header */
+.context-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+}
+
+.context-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 1rem 0;
+    color: var(--gray-800);
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+    margin-bottom: 1.5rem;
+}
+
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: #e3f2fd;
+    border-left: 4px solid var(--info-color);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.info-box i {
+    color: var(--info-color);
+    font-size: 1.5rem;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+.info-box p {
+    margin: 0;
+    color: #0c5460;
+    line-height: 1.6;
+}
+
+/* Context Form Section */
+.context-form-section {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+}
+
+.context-form {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.form-group {
+    margin-bottom: 2rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.form-group label i {
+    color: var(--primary-color);
+}
+
+.form-group label .optional {
+    font-weight: 400;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.form-group textarea,
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.form-group textarea:focus,
+.form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group textarea.error,
+.form-group input[type="text"].error {
+    border-color: var(--danger-color);
+}
+
+.char-count {
+    display: block;
+    text-align: right;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+.field-error {
+    display: block;
+    color: var(--danger-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Features Input */
+.features-input {
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    min-height: 60px;
+    background: var(--white);
+}
+
+.features-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.feature-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+}
+
+.feature-tag .remove-tag {
+    background: transparent;
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.feature-tag .remove-tag:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.features-input input {
+    border: none;
+    padding: 0.5rem 0;
+    width: 100%;
+    outline: none;
+}
+
+.features-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.suggestion-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.suggestion-tag {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.suggestion-tag:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+/* Requirements Input */
+.requirements-input {
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    min-height: 60px;
+    background: var(--white);
+}
+
+.requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gray-100);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+}
+
+.requirement-item .remove-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray-600);
+    cursor: pointer;
+    padding: 0.25rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.requirement-item .remove-btn:hover {
+    background: var(--gray-200);
+    color: var(--danger-color);
+}
+
+.requirements-input input {
+    border: none;
+    padding: 0.5rem 0;
+    width: 100%;
+    outline: none;
+}
+
+.text-gray-400 {
+    color: var(--gray-400);
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+/* Framework Selector */
+.framework-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.framework-option {
+    position: relative;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--white);
+}
+
+.framework-option:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--box-shadow);
+}
+
+.framework-option.selected {
+    border-color: var(--primary-color);
+    background: #e3f2fd;
+}
+
+.framework-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.framework-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+.framework-option label i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.framework-option label span {
+    font-weight: 600;
+    color: var(--gray-800);
+    font-size: 1rem;
+}
+
+.framework-option label small {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-300);
+}
+
+.form-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Example Section */
+.example-section {
+    max-width: 900px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.example-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1.5rem;
+}
+
+.example-section h3 i {
+    color: var(--warning-color);
+}
+
+.example-card {
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-300);
+}
+
+.example-header strong {
+    color: var(--gray-800);
+}
+
+.btn-link {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: underline;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+.btn-link:hover {
+    color: #0056b3;
+}
+
+.example-content {
+    padding: 1.5rem;
+}
+
+.example-content p {
+    margin: 0.75rem 0;
+    color: var(--gray-700);
+    line-height: 1.6;
+}
+
+.example-content strong {
+    color: var(--gray-800);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .context-header h1 {
+        font-size: 2rem;
+    }
+    
+    .context-form {
+        padding: 1.5rem;
+    }
+    
+    .framework-selector {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .example-section {
+        padding: 1.5rem;
+    }
+    
+    .example-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .context-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .context-form {
+        padding: 1rem;
+    }
+    
+    .info-box {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    
+    .features-suggestions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+

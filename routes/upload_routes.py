@@ -76,7 +76,7 @@ def upload():
     # Return JSON response for AJAX (upload.js expects this)
     return jsonify({
         'file_id': file_id,
-        'redirect_url': url_for('analysis.context_form', file_id=file_id),
+        'redirect_url': url_for('analysis.analysis_results', file_id=file_id),
         'structure': files[file_id].get('structure', [])
     }), 200
 
@@ -128,7 +128,7 @@ def api_upload():
     # Return JSON response
     return jsonify({
         'file_id': file_id,
-        'redirect_url': url_for('analysis.context_form', file_id=file_id),
+        'redirect_url': url_for('analysis.analysis_results', file_id=file_id),
         'structure': files[file_id].get('structure', [])
     }), 200
 

@@ -1,19 +1,66 @@
 {% extends "base.html" %}
 
-{% block title %}Download - CrodeX{% endblock %}
+{% block title %}Results - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="download-section">
-    <h1>Your File is Ready!</h1>
-    <p class="section-description">Your file has been processed successfully</p>
+<section class="result-header">
+    <div class="status-badge success">
+        <i class="fas fa-check-circle"></i>
+        Conversion Complete
+    </div>
+    <h1>Your package is ready</h1>
+    <p class="subtitle">Download the converted project and the migration guide.</p>
+</section>
 
-    <div class="download-container">
-        <div class="download-success">
-            <div class="success-icon">✅</div>
-            <h2>Processing Complete</h2>
-            <p>Your file has been converted and is ready for download</p>
+<section class="result-actions-section">
+    <div class="result-actions card">
+        <div class="result-summary-container">
+            <p id="result-summary" class="result-summary">
+                Converted from <span id="source-framework">Source</span> → <span id="target-framework">Target</span>. 
+                Processed <span id="files-count">0</span> files.
+            </p>
         </div>
+        <div class="result-buttons">
+            <a href="{{ url_for('api_download.download_file_content', file_id=file_id) }}" class="btn btn-primary" id="download-zip" download>
+                <i class="fas fa-file-archive"></i>
+                Download ZIP
+            </a>
+            <a href="#" class="btn btn-secondary" id="download-guide">
+                <i class="fas fa-book"></i>
+                Migration Guide
+            </a>
+            <a href="{{ url_for('upload.upload') }}" class="btn btn-link">
+                Start New Conversion
+            </a>
+        </div>
+    </div>
+</section>
 
+<section class="result-more-section">
+    <div class="result-more">
+        <h3>
+            <i class="fas fa-info-circle"></i>
+            What's inside?
+        </h3>
+        <ul class="result-list">
+            <li>Converted project scaffold for your target framework</li>
+            <li>Notes on files that need manual review</li>
+            <li>Step-by-step migration checklist</li>
+        </ul>
+    </div>
+</section>
+
+<!-- File Details (Existing Feature - Keep it) -->
+<section class="file-details-section">
+    <div class="file-details-card">
+        <h3>
+            <i class="fas fa-file"></i>
+            File Details
+        </h3>
         <div class="file-details">
             <div class="detail-item">
                 <span class="detail-label">Original File:</span>
@@ -25,33 +72,39 @@
             </div>
             <div class="detail-item">
                 <span class="detail-label">File Size:</span>
-                <span class="detail-value" id="file-size">{{ file_size }}</span>
-            </div>
-        </div>
-
-        <div class="download-actions">
-            <a href="{{ url_for('download.download_file', file_id=file_id) }}" class="btn btn-primary btn-large" id="download-btn">
-                Download File
-            </a>
-            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">Upload Another File</a>
-        </div>
-
-        <div class="share-options">
-            <h3>Share Options</h3>
-            <div class="share-buttons">
-                <button type="button" class="btn btn-outline" id="copy-link-btn">Copy Link</button>
-                <button type="button" class="btn btn-outline" id="email-btn">Email</button>
+                <span class="detail-value" id="file-size">{% if file_size %}{{ file_size | filesizeformat }}{% else %}N/A{% endif %}</span>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Share Options (Existing Feature - Keep it) -->
+<section class="share-options-section">
+    <div class="share-options-card">
+        <h3>
+            <i class="fas fa-share-alt"></i>
+            Share Options
+        </h3>
+        <div class="share-buttons">
+            <button type="button" class="btn btn-outline" id="copy-link-btn">
+                <i class="fas fa-link"></i>
+                Copy Link
+            </button>
+            <button type="button" class="btn btn-outline" id="email-btn">
+                <i class="fas fa-envelope"></i>
+                Email
+            </button>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     const fileId = '{{ file_id }}';
     const downloadUrl = '{{ url_for("download.download_file", file_id=file_id) }}';
+    const files_processed = {{ files_processed | default(0) }};
 </script>
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
 <script src="{{ url_for('static', filename='js/download.js') }}"></script>
 {% endblock %}
-
