@@ -36,7 +36,7 @@ def analyze_project():
             }), 400
         
         # Initialize services
-        claude = ClaudeService(current_app.config['ANTHROPIC_API_KEY'])
+        claude = GeminiService(current_app.config['ANTHROPIC_API_KEY'])
         analyzer = FrameworkAnalyzer()
         
         # Step 1: Quick local analysis
