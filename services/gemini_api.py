@@ -19,7 +19,7 @@ class GeminiService:
         genai.configure(api_key=self.api_key)
         
         # Updated to use gemini-2.0-flash-exp model
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
         
         self.generation_config = {
             'temperature': float(os.getenv('AI_TEMPERATURE', 0.7)),
@@ -28,7 +28,7 @@ class GeminiService:
             'max_output_tokens': int(os.getenv('AI_MAX_OUTPUT_TOKENS', 8192)),
         }
         
-        logger.info("✅ GeminiService initialized with gemini-2.0-flash-exp")
+        logger.info("✅ GeminiService initialized with gemini-2.5-pro")
         
     def analyze_project_structure(self, files: Dict[str, str]) -> Dict:
         try:
