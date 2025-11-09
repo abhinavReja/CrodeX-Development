@@ -208,8 +208,7 @@ def confirm_context():
         {
             "purpose": "E-commerce platform",
             "features": ["user auth", "payment gateway"],
-            "business_logic": "Process orders and payments",
-            "requirements": ["maintain user sessions", "secure payments"]
+            "business_logic": "Process orders and payments"
         }
         
     Response:
