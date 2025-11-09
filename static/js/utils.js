@@ -173,6 +173,38 @@ function downloadFile(url, filename) {
     document.body.removeChild(a);
 }
 
+/**
+ * Scroll to anchor on page load (handles navigation from other pages)
+ */
+function scrollToAnchor() {
+    // Check if URL has a hash
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1); // Remove the #
+        const element = document.getElementById(hash);
+        
+        if (element) {
+            // Wait for page to be fully loaded
+            setTimeout(() => {
+                const offset = 80; // Offset for navbar height
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+    }
+}
+
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scrollToAnchor);
+} else {
+    scrollToAnchor();
+}
+
 // Export functions to window for global access
 window.showToast = showToast;
 window.hideToast = hideToast;
@@ -186,6 +218,7 @@ window.formatDate = formatDate;
 window.debounce = debounce;
 window.copyToClipboard = copyToClipboard;
 window.downloadFile = downloadFile;
+window.scrollToAnchor = scrollToAnchor;
 
 // Create Utils object for organized access
 window.Utils = {

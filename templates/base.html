@@ -25,8 +25,9 @@
             <div class="nav-menu">
                 <a href="{{ url_for('main.index') }}">Home</a>
                 <a href="{{ url_for('upload.upload') }}">Upload</a>
-                <a href="#features">Features</a>
-                <a href="#supported">Frameworks</a>
+                <a href="{{ url_for('main.index') }}#features">Features</a>
+                <a href="{{ url_for('main.index') }}#supported">Frameworks</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
             </div>
         </div>
     </nav>
@@ -51,9 +52,7 @@
         <div class="container">
             <p>&copy; 2025 CrodeX. All rights reserved.</p>
             <div class="footer-links">
-                <a href="#privacy">Privacy Policy</a>
-                <a href="#terms">Terms of Service</a>
-                <a href="#contact">Contact</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
             </div>
         </div>
     </footer>

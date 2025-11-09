@@ -4,8 +4,8 @@
 .hero-section {
     text-align: center;
     padding: 4rem 0;
-    background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
-    color: var(--white);
+    background: transparent;
+    color: var(--gray-800);
     border-radius: var(--border-radius);
     margin-bottom: 3rem;
 }
@@ -34,7 +34,7 @@
 .hero-subtitle {
     font-size: 1.25rem;
     margin-bottom: 2rem;
-    opacity: 0.9;
+    color: var(--gray-600);
     line-height: 1.6;
 }
 
@@ -139,6 +139,7 @@
     transition: var(--transition);
     cursor: pointer;
     border: 2px solid transparent;
+    position: relative;
 }
 
 .framework-badge:hover {
@@ -158,6 +159,88 @@
     font-weight: 600;
     color: var(--gray-800);
     font-size: 0.9rem;
+}
+
+/* Available Framework Styles */
+.framework-badge.available {
+    background: var(--white);
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+}
+
+.framework-badge.available:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--box-shadow-lg);
+}
+
+.framework-badge.available i {
+    color: var(--primary-color);
+}
+
+.framework-badge.available .available-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--primary-color);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Coming Soon Framework Styles */
+.framework-badge.coming-soon {
+    background: var(--gray-100);
+    border: 2px solid var(--gray-300);
+    cursor: not-allowed;
+    opacity: 0.6;
+    position: relative;
+}
+
+.framework-badge.coming-soon:hover {
+    transform: none;
+    border-color: var(--gray-300);
+    box-shadow: none;
+    background: var(--gray-100);
+}
+
+.framework-badge.coming-soon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--border-radius);
+    z-index: 1;
+}
+
+.framework-badge.coming-soon i {
+    color: var(--gray-500);
+    position: relative;
+    z-index: 2;
+}
+
+.framework-badge.coming-soon > span:first-of-type {
+    color: var(--gray-500);
+    position: relative;
+    z-index: 2;
+}
+
+.framework-badge.coming-soon .coming-soon-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-500);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
 }
 
 /* Toast Notification */
