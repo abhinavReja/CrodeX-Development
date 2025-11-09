@@ -86,6 +86,15 @@ def upload_project():
         # Load file contents
         files_dict = file_manager.load_files(extracted_path_str)
 
+        # CRITICAL: Clear any previous conversion results when uploading new project
+        # This ensures we don't accidentally use old converted files
+        if 'converted_path' in session:
+            del session['converted_path']
+        if 'conversion_result' in session:
+            del session['conversion_result']
+        if 'conversion_complete' in session:
+            del session['conversion_complete']
+        
         # Store in session (convert Path objects to strings for JSON serialization)
         session['project_id'] = project_id
         session['project_path'] = project_path_str  # Already converted to string
@@ -94,6 +103,12 @@ def upload_project():
         session['files_dict'] = files_dict
         session['original_filename'] = filename  # Store original filename for download
         session.modified = True
+        
+        # Log what was stored
+        current_app.logger.info(f"Stored {len(files_dict)} files in session for project {project_id}")
+        if files_dict:
+            sample_keys = list(files_dict.keys())[:5]
+            current_app.logger.info(f"Sample files stored: {sample_keys}")
 
         # Perform quick local analysis immediately after upload (no AI call to save time/API)
         try:
