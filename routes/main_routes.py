@@ -15,4 +15,3 @@ def health_check():
         'service': 'converter-api',
         'version': '1.0.0'
     }), 200
-
