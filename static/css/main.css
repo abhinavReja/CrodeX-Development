@@ -20,7 +20,7 @@
     --gray-800: #343a40;
     --gray-900: #212529;
     
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-size-base: 1rem;
     --line-height-base: 1.5;
     
@@ -67,6 +67,17 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-brand i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
 }
 
 .nav-brand a {
@@ -186,6 +197,17 @@ body {
     font-size: 1.125rem;
 }
 
+.btn-success {
+    color: var(--white);
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -235,7 +257,27 @@ textarea.form-control {
 }
 
 .footer .container {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: var(--gray-300);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: var(--white);
 }
 
 /* Utility Classes */

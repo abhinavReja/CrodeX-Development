@@ -3,32 +3,96 @@
 {% block title %}Home - CrodeX{% endblock %}
 
 {% block content %}
-<div class="hero-section">
+<!-- Hero Section -->
+<section class="hero-section">
     <div class="hero-content">
-        <h1>Welcome to CrodeX</h1>
-        <p class="hero-subtitle">Transform your documents with ease</p>
-        <a href="{{ url_for('upload.upload') }}" class="btn btn-primary btn-large">Get Started</a>
+        <h1 class="hero-title">
+            Transform Your Code
+            <span class="gradient-text">Effortlessly</span>
+        </h1>
+        <p class="hero-subtitle">
+            Convert your project to any framework with AI-powered intelligence.
+            Upload, analyze, and convert in minutes.
+        </p>
+        <a href="{{ url_for('upload.upload') }}" class="btn btn-primary btn-large">
+            <i class="fas fa-rocket" aria-hidden="true"></i>
+            Get Started
+        </a>
     </div>
-</div>
+</section>
 
-<div class="features-section">
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <h2>Why Choose Our Converter?</h2>
     <div class="features-grid">
         <div class="feature-card">
-            <div class="feature-icon">📄</div>
-            <h3>Easy Upload</h3>
-            <p>Upload your files quickly and securely</p>
+            <div class="feature-icon">
+                <i class="fas fa-brain" aria-hidden="true"></i>
+            </div>
+            <h3>AI-Powered</h3>
+            <p>AI analyzes your code structure and maintains business logic</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">⚡</div>
-            <h3>Fast Processing</h3>
-            <p>Get your files processed in no time</p>
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt" aria-hidden="true"></i>
+            </div>
+            <h3>Secure & Private</h3>
+            <p>No permanent storage. Files auto-delete after conversion</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <h3>Secure</h3>
-            <p>Your files are handled with care</p>
+            <div class="feature-icon">
+                <i class="fas fa-bolt" aria-hidden="true"></i>
+            </div>
+            <h3>Fast Conversion</h3>
+            <p>Convert entire projects in minutes with real-time progress</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-code-branch" aria-hidden="true"></i>
+            </div>
+            <h3>Context-Aware</h3>
+            <p>Understands your project's purpose and maintains functionality</p>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Supported Frameworks Section -->
+<section id="supported" class="frameworks-section">
+    <h2>Supported Frameworks</h2>
+    <div class="frameworks-grid">
+        <div class="framework-badge">
+            <i class="fab fa-laravel" aria-hidden="true"></i>
+            <span>Laravel</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-python" aria-hidden="true"></i>
+            <span>Django</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-node-js" aria-hidden="true"></i>
+            <span>Express.js</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-python" aria-hidden="true"></i>
+            <span>Flask</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-symfony" aria-hidden="true"></i>
+            <span>Symfony</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-java" aria-hidden="true"></i>
+            <span>Spring Boot</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-microsoft" aria-hidden="true"></i>
+            <span>ASP.NET Core</span>
+        </div>
+        <div class="framework-badge">
+            <i class="fab fa-php" aria-hidden="true"></i>
+            <span>CodeIgniter</span>
+        </div>
+    </div>
+</section>
 {% endblock %}
 

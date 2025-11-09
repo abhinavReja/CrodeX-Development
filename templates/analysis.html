@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Analysis Header -->
+<section class="analysis-header">
+    <div class="status-badge success">
+        <i class="fas fa-check-circle"></i>
+        Analysis Complete
+    </div>
+    <h1>Project Analysis Results</h1>
+    <p class="subtitle">We've analyzed your project structure and detected the framework</p>
+</section>
+
+<!-- Analysis Results -->
+<section class="analysis-results">
+    <!-- Framework Detection -->
+    <div class="result-card primary-card">
+        <div class="card-header">
+            <h2>
+                <i class="fas fa-rocket"></i>
+                Framework Detected
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="framework-result">
+                <div class="framework-icon" id="framework-icon">
+                    <i class="fab fa-laravel"></i>
+                </div>
+                <div class="framework-info">
+                    <h3 id="detected-framework">Loading...</h3>
+                    <div class="confidence-bar">
+                        <span>Confidence:</span>
+                        <div class="confidence-progress">
+                            <div id="confidence-fill" class="confidence-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="confidence-percent">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Structure -->
+    <div class="result-card">
+        <div class="card-header">
+            <h2>
+                <i class="fas fa-folder-tree"></i>
+                Project Structure
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="structure-grid">
+                <div class="structure-item">
+                    <div class="structure-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="structure-info">
+                        <h4>Controllers</h4>
+                        <span id="controllers-count" class="count">0 files</span>
+                    </div>
+                </div>
+                <div class="structure-item">
+                    <div class="structure-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="structure-info">
+                        <h4>Models</h4>
+                        <span id="models-count" class="count">0 files</span>
+                    </div>
+                </div>
+                <div class="structure-item">
+                    <div class="structure-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="structure-info">
+                        <h4>Views</h4>
+                        <span id="views-count" class="count">0 files</span>
+                    </div>
+                </div>
+                <div class="structure-item">
+                    <div class="structure-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <div class="structure-info">
+                        <h4>Routes</h4>
+                        <span id="routes-count" class="count">0 files</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependencies -->
+    <div class="result-card">
+        <div class="card-header">
+            <h2>
+                <i class="fas fa-cube"></i>
+                Dependencies Detected
+            </h2>
+        </div>
+        <div class="card-body">
+            <div id="dependencies-list" class="dependencies-list">
+                <p class="text-gray-500">Loading dependencies...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Info -->
+    <div class="result-card">
+        <div class="card-header">
+            <h2>
+                <i class="fas fa-table"></i>
+                Database Information
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="database-info">
+                <div class="info-row">
+                    <span class="info-label">Database Type:</span>
+                    <span id="db-type" class="info-value">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Migrations Found:</span>
+                    <span id="migrations-found" class="info-value">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tables Detected:</span>
+                    <span id="tables-list" class="info-value">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Notes -->
+    <div class="result-card">
+        <div class="card-header">
+            <h2>
+                <i class="fas fa-lightbulb"></i>
+                AI Analysis Notes
+            </h2>
+        </div>
+        <div class="card-body">
+            <div id="ai-notes" class="ai-notes">
+                <p>Loading analysis notes...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Action Buttons -->
+<section class="action-section">
+    <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary" onclick="return confirm('Are you sure? This will discard the current analysis.')">
+        <i class="fas fa-arrow-left"></i>
+        Upload New Project
+    </a>
+    <a href="{{ url_for('analysis.context_form', file_id=file_id) }}" class="btn btn-primary btn-large">
+        Continue to Context
+        <i class="fas fa-arrow-right"></i>
+    </a>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+<script>
+    // Initialize analysis with file_id from template
+    const fileId = '{{ file_id }}';
+    if (fileId) {
+        loadAnalysis(fileId);
+    }
+</script>
+{% endblock %}
+

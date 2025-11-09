@@ -1,76 +1,203 @@
 {% extends "base.html" %}
 
-{% block title %}Provide Context - CrodeX{% endblock %}
+{% block title %}Project Context - CrodeX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/context.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="context-section">
-    <h1>Provide Additional Context</h1>
-    <p class="section-description">Help us understand your file better by providing some context</p>
-
-    <!-- Auto-suggestions Banner -->
-    <div class="suggestions-banner" id="suggestions-banner" style="display: none;">
-        <div class="suggestions-header">
-            <span class="suggestions-icon">💡</span>
-            <strong>Auto-detected suggestions based on file analysis:</strong>
-            <button type="button" class="btn-close-suggestions" id="close-suggestions">×</button>
-        </div>
-        <div class="suggestions-content" id="suggestions-content"></div>
+<section class="context-header">
+    <h1>Confirm Project Context</h1>
+    <p class="subtitle">Help us understand your project better for accurate conversion</p>
+    <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <p>Providing detailed context ensures the AI maintains your business logic and requirements during conversion.</p>
     </div>
+</section>
 
-    <!-- Validation Messages -->
-    <div class="validation-messages" id="validation-messages"></div>
-
-    <form id="context-form" method="POST" action="{{ url_for('analysis.context_form', file_id=file_id) }}" novalidate>
+<section class="context-form-section">
+    <form id="context-form" class="context-form" method="POST" action="{{ url_for('analysis.context_form', file_id=file_id) }}" novalidate>
         <input type="hidden" name="file_id" id="file-id" value="{{ file_id }}">
         
-        <!-- Context Type -->
+        <!-- Project Purpose -->
         <div class="form-group">
-            <label for="context-type">Context Type <span class="required">*</span></label>
-            <select id="context-type" name="context_type" class="form-control" required>
-                <option value="">Select context type</option>
-                <option value="document">Document</option>
-                <option value="image">Image</option>
-                <option value="code">Code</option>
-                <option value="data">Data</option>
-                <option value="archive">Archive</option>
-                <option value="other">Other</option>
-            </select>
-            <span class="field-error" id="context-type-error"></span>
+            <label for="purpose">
+                <i class="fas fa-bullseye"></i>
+                Project Purpose *
+            </label>
+            <textarea 
+                id="purpose" 
+                name="purpose" 
+                rows="4" 
+                placeholder="Describe what your application does (e.g., E-commerce platform for selling products)"
+                required
+                maxlength="500"
+            ></textarea>
+            <span class="char-count"><span id="purpose-count">0</span> / 500</span>
+            <span class="field-error" id="purpose-error"></span>
         </div>
 
-        <!-- Description with Auto-suggestions -->
+        <!-- Key Features -->
         <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" class="form-control autocomplete-input" rows="5" 
-                      placeholder="Describe your file or provide additional context..."></textarea>
-            <div class="autocomplete-suggestions" id="description-suggestions"></div>
-            <span class="field-error" id="description-error"></span>
-        </div>
-
-        <!-- Dynamic Fields Container -->
-        <div id="dynamic-fields">
-            <!-- Dynamic fields will be added here by JavaScript -->
-        </div>
-
-        <!-- Feature Checkboxes -->
-        <div class="form-group feature-checkboxes-group" id="feature-checkboxes-group" style="display: none;">
-            <label class="feature-group-label">Processing Features <span class="feature-hint">(Select desired features)</span></label>
-            <div class="feature-checkboxes" id="feature-checkboxes">
-                <!-- Feature checkboxes will be dynamically generated -->
+            <label for="features">
+                <i class="fas fa-star"></i>
+                Key Features *
+            </label>
+            <div class="features-input">
+                <div id="features-tags" class="features-tags">
+                    <!-- Tags will be added here -->
+                </div>
+                <input 
+                    type="text" 
+                    id="feature-input" 
+                    placeholder="Type a feature and press Enter (e.g., user authentication)"
+                >
+            </div>
+            <div class="features-suggestions">
+                <span class="suggestion-label">Suggestions:</span>
+                <button type="button" class="suggestion-tag" onclick="addFeature('User Authentication')">User Authentication</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Payment Gateway')">Payment Gateway</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Email Notifications')">Email Notifications</button>
+                <button type="button" class="suggestion-tag" onclick="addFeature('Admin Dashboard')">Admin Dashboard</button>
             </div>
             <span class="field-error" id="features-error"></span>
         </div>
 
+        <!-- Business Logic -->
+        <div class="form-group">
+            <label for="business-logic">
+                <i class="fas fa-brain"></i>
+                Core Business Logic *
+            </label>
+            <textarea 
+                id="business-logic" 
+                name="business-logic" 
+                rows="6" 
+                placeholder="Describe the main business flows and logic (e.g., Users can browse products, add to cart, checkout with payment processing)"
+                required
+                maxlength="1000"
+            ></textarea>
+            <span class="char-count"><span id="logic-count">0</span> / 1000</span>
+            <span class="field-error" id="business-logic-error"></span>
+        </div>
+
+        <!-- Special Requirements -->
+        <div class="form-group">
+            <label for="requirements">
+                <i class="fas fa-list-check"></i>
+                Special Requirements
+                <span class="optional">(Optional)</span>
+            </label>
+            <div class="requirements-input">
+                <div id="requirements-list" class="requirements-list">
+                    <!-- Requirements will be added here -->
+                </div>
+                <input 
+                    type="text" 
+                    id="requirement-input" 
+                    placeholder="Type a requirement and press Enter"
+                >
+            </div>
+        </div>
+
+        <!-- Target Framework Selection -->
+        <div class="form-group">
+            <label>
+                <i class="fas fa-code-branch"></i>
+                Convert To *
+            </label>
+            <div class="framework-selector">
+                <div class="framework-option" data-framework="Django">
+                    <input type="radio" name="target-framework" id="django" value="Django" required>
+                    <label for="django">
+                        <i class="fab fa-python"></i>
+                        <span>Django</span>
+                        <small>Python Web Framework</small>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Flask">
+                    <input type="radio" name="target-framework" id="flask" value="Flask">
+                    <label for="flask">
+                        <i class="fab fa-python"></i>
+                        <span>Flask</span>
+                        <small>Lightweight Python</small>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Laravel">
+                    <input type="radio" name="target-framework" id="laravel" value="Laravel">
+                    <label for="laravel">
+                        <i class="fab fa-laravel"></i>
+                        <span>Laravel</span>
+                        <small>PHP Framework</small>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Express.js">
+                    <input type="radio" name="target-framework" id="express" value="Express.js">
+                    <label for="express">
+                        <i class="fab fa-node-js"></i>
+                        <span>Express.js</span>
+                        <small>Node.js Framework</small>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="Spring Boot">
+                    <input type="radio" name="target-framework" id="spring" value="Spring Boot">
+                    <label for="spring">
+                        <i class="fab fa-java"></i>
+                        <span>Spring Boot</span>
+                        <small>Java Framework</small>
+                    </label>
+                </div>
+                <div class="framework-option" data-framework="ASP.NET Core">
+                    <input type="radio" name="target-framework" id="aspnet" value="ASP.NET Core">
+                    <label for="aspnet">
+                        <i class="fab fa-microsoft"></i>
+                        <span>ASP.NET Core</span>
+                        <small>.NET Framework</small>
+                    </label>
+                </div>
+            </div>
+            <span class="field-error" id="target-framework-error"></span>
+        </div>
+
         <!-- Form Actions -->
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary" id="submit-btn">Continue</button>
-            <a href="{{ url_for('upload.upload') }}" class="btn btn-secondary">Back</a>
+            <a href="{{ url_for('analysis.analysis_results', file_id=file_id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Analysis
+            </a>
+            <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
+                Start Conversion
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
     </form>
-</div>
+</section>
+
+<!-- Example Context -->
+<section class="example-section">
+    <h3>
+        <i class="fas fa-lightbulb"></i>
+        Need Help? Here's an Example
+    </h3>
+    <div class="example-card">
+        <div class="example-header">
+            <strong>E-commerce Platform Example</strong>
+            <button class="btn-link" type="button" onclick="fillExampleContext()">
+                Use This Example
+            </button>
+        </div>
+        <div class="example-content">
+            <p><strong>Purpose:</strong> Online marketplace for buying and selling electronics</p>
+            <p><strong>Features:</strong> User authentication, Product catalog, Shopping cart, Payment processing, Order tracking</p>
+            <p><strong>Business Logic:</strong> Users can register, browse products by category, add items to cart, checkout with multiple payment options, and track their orders. Admin can manage products and view sales analytics.</p>
+            <p><strong>Requirements:</strong> Maintain user sessions, Secure payment handling, Email notifications for orders</p>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/context_form.js') }}"></script>
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/context.js') }}"></script>
 {% endblock %}
-

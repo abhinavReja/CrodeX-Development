@@ -311,15 +311,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         fetchZipStructure(response.file_id);
                     }
                     
-                    // Enable continue button to proceed to next step
-                    uploadBtn.textContent = 'Continue to Context Form';
+                    // Auto-redirect to analysis page after a short delay
+                    setTimeout(function() {
+                        if (response.redirect_url) {
+                            window.location.href = response.redirect_url;
+                        } else if (response.file_id) {
+                            window.location.href = `/analysis/${response.file_id}`;
+                        }
+                    }, 1000);
+                    
+                    // Also enable continue button as fallback
+                    uploadBtn.textContent = 'Continue to Analysis';
                     uploadBtn.disabled = false;
                     uploadBtn.onclick = function(e) {
                         e.preventDefault();
                         if (response.redirect_url) {
                             window.location.href = response.redirect_url;
                         } else if (response.file_id) {
-                            window.location.href = `/context/${response.file_id}`;
+                            window.location.href = `/analysis/${response.file_id}`;
                         }
                     };
                 } catch (error) {
