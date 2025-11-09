@@ -57,19 +57,21 @@ You MUST respond with ONLY valid JSON in this EXACT format (no markdown, no extr
         "migrations_found": true,
         "tables": ["users", "posts"]
     }},
-    "business_logic": "DETAILED and COMPREHENSIVE description of the core business logic. This MUST include: 1) Main features and functionalities - what the application does, 2) User workflows - how users interact with the system, 3) Data processing - how data flows through the application, 4) Business rules - validation rules, calculations, and logic, 5) Key algorithms - core calculations and processing logic, 6) Integration points - external services, APIs, databases, 7) Authentication and authorization - how users are authenticated and authorized, 8) Transaction processing - payments, orders, or other transactions, 9) File handling - how files are processed and stored, 10) API endpoints - what APIs exist and their purposes. Analyze the actual code to extract specific workflows, business rules, data transformations, and processes. Be specific and reference actual code patterns, functions, and logic found in the files.",
+    "business_logic": "DETAILED and COMPREHENSIVE description of the core business logic. This MUST include: 1) Main features and functionalities - what the application does, 2) User workflows - how users interact with the system, 3) Data processing - how data flows through the application, 4) Business rules - validation rules, calculations, and logic, 5) Key algorithms - core calculations and processing logic, 6) Integration points - external services, APIs, databases, 7) Authentication and authorization - how users are authenticated and authorized, 8) Transaction processing - payments, orders, or other transactions, 9) File handling - how files are processed and stored, 10) API endpoints - what APIs exist and their purposes. Analyze the actual code to extract specific workflows, business rules, data transformations, and processes. Be specific and reference actual code patterns, functions, and logic found in the files. IMPORTANT: The business_logic field MUST NOT exceed 5000 characters (approximately 800-1000 words). Be concise while maintaining comprehensiveness.",
     "notes": "Brief observations about the project structure and architecture"
 }}
 
 CRITICAL REQUIREMENTS:
-- The "business_logic" field is MANDATORY and must be detailed and comprehensive (minimum 500 words)
+- The "business_logic" field is MANDATORY and must be detailed and comprehensive
+- MINIMUM: 500 words to ensure sufficient detail
+- MAXIMUM: 5000 characters (approximately 800-1000 words) - this is a HARD LIMIT, do not exceed
 - Analyze ALL code files to understand the complete business logic
 - Extract specific workflows, data flows, business rules, and algorithms
 - Describe how the application works, what problems it solves, and what business processes it implements
 - Reference actual code patterns, functions, routes, and logic found in the files
 - The business_logic should describe the complete application functionality in detail
 
-IMPORTANT: Respond with ONLY the JSON object, no other text or formatting."""
+IMPORTANT: Respond with ONLY the JSON object, no other text or formatting. Ensure the business_logic field does not exceed 5000 characters."""
 
             response = self.model.generate_content(
                 prompt,
@@ -86,6 +88,16 @@ IMPORTANT: Respond with ONLY the JSON object, no other text or formatting."""
                 # Fallback: extract business logic from code patterns
                 logger.warning("Business logic not found in AI response, using fallback extraction")
                 analysis_result['business_logic'] = self._extract_business_logic_fallback(files)
+            
+            # Enforce 5000 character limit on business_logic (safety measure)
+            if 'business_logic' in analysis_result and analysis_result['business_logic']:
+                business_logic = analysis_result['business_logic'].strip()
+                if len(business_logic) > 5000:
+                    logger.warning(f"Business logic exceeds 5000 characters ({len(business_logic)}), truncating to 5000")
+                    analysis_result['business_logic'] = business_logic[:5000].rstrip()
+                    # Add ellipsis if truncated mid-sentence
+                    if not analysis_result['business_logic'].endswith(('.', '!', '?', '\n')):
+                        analysis_result['business_logic'] += '...'
             
             logger.info(f"Analysis complete: {analysis_result.get('framework', 'Unknown')}")
             return analysis_result
