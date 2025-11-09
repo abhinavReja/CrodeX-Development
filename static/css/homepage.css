@@ -1,0 +1,74 @@
+/* Homepage Specific Styles - Background Image */
+
+/* Homepage Background Image with 30% transparency */
+body.homepage {
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Background image overlay - covers entire page behind content */
+/* Note: background-image URL is set inline in template using Flask url_for for proper URL encoding */
+body.homepage::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    opacity: 0.3; /* 30% transparent (70% visible) */
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Fallback: If image doesn't exist, show a subtle gradient background */
+body.homepage::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Ensure navbar appears above background */
+body.homepage .navbar {
+    position: relative;
+    z-index: 100;
+    background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent navbar for better blend */
+    backdrop-filter: blur(10px); /* Optional: blur effect for modern look */
+}
+
+/* Ensure main content appears above background */
+body.homepage .main-content {
+    position: relative;
+    z-index: 1;
+    min-height: calc(100vh - 200px); /* Ensure it covers the viewport */
+}
+
+/* Ensure all sections are above background */
+body.homepage .hero-section,
+body.homepage .features-section,
+body.homepage .frameworks-section {
+    position: relative;
+    z-index: 1;
+}
+
+/* Make sure content in container is above background */
+body.homepage .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure footer appears above background */
+body.homepage .footer {
+    position: relative;
+    z-index: 1;
+    background-color: rgba(52, 58, 64, 0.95); /* Slightly transparent footer */
+}

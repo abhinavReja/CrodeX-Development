@@ -1,14 +1,11 @@
 // Context form handling with tags, validation, and framework selection
 
 let features = [];
-let requirements = [];
 
 const contextForm = document.getElementById('context-form');
 const purposeInput = document.getElementById('purpose');
 const featureInput = document.getElementById('feature-input');
 const featuresTagsContainer = document.getElementById('features-tags');
-const requirementInput = document.getElementById('requirement-input');
-const requirementsList = document.getElementById('requirements-list');
 const businessLogicInput = document.getElementById('business-logic');
 const submitBtn = document.getElementById('submit-btn');
 
@@ -25,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setupForm();
     setupFeatureInput();
-    setupRequirementInput();
     setupCharacterCounters();
     setupFrameworkSelector();
     loadPreviousContext();
@@ -83,50 +79,6 @@ function renderFeatures() {
     `).join('');
 }
 
-function setupRequirementInput() {
-    requirementInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const value = requirementInput.value.trim();
-            if (value) {
-                addRequirement(value);
-                requirementInput.value = '';
-            }
-        }
-    });
-}
-
-function addRequirement(reqText) {
-    if (requirements.includes(reqText)) {
-        showToast('Requirement already added', 'warning');
-        return;
-    }
-    requirements.push(reqText);
-    renderRequirements();
-}
-
-function removeRequirement(reqText) {
-    requirements = requirements.filter(r => r !== reqText);
-    renderRequirements();
-}
-
-window.removeRequirement = removeRequirement;
-
-function renderRequirements() {
-    if (!requirements.length) {
-        requirementsList.innerHTML = '<p class="text-gray-400">No requirements added yet</p>';
-        return;
-    }
-    requirementsList.innerHTML = requirements.map((req, i) => `
-        <div class="requirement-item">
-            <span>${i + 1}. ${escapeHtml(req)}</span>
-            <button type="button" class="remove-btn" onclick="removeRequirement('${req.replace(/'/g, "\\'")}')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `).join('');
-}
-
 function setupCharacterCounters() {
     purposeInput.addEventListener('input', () => {
         const count = purposeInput.value.length;
@@ -155,16 +107,24 @@ function setupFrameworkSelector() {
         const radio = option.querySelector('input[type="radio"]');
         const label = option.querySelector('label');
         
+        // Skip if this is a coming-soon framework
+        if (option.classList.contains('coming-soon') || radio.disabled) {
+            option.style.cursor = 'not-allowed';
+            return;
+        }
+        
         // Make the entire option clickable
         option.addEventListener('click', (e) => {
-            if (e.target !== radio && e.target !== label) {
+            if (e.target !== radio && e.target !== label && !radio.disabled) {
                 radio.checked = true;
                 updateFrameworkSelection();
             }
         });
         
         radio.addEventListener('change', () => {
-            updateFrameworkSelection();
+            if (!radio.disabled) {
+                updateFrameworkSelection();
+            }
         });
     });
 }
@@ -191,10 +151,6 @@ function loadPreviousContext() {
     if (Array.isArray(ctx.features)) {
         features = ctx.features.slice();
         renderFeatures();
-    }
-    if (Array.isArray(ctx.requirements)) {
-        requirements = ctx.requirements.slice();
-        renderRequirements();
     }
     
     // Update character counts
@@ -362,13 +318,6 @@ function fillExampleContext() {
     businessLogicInput.value = 'Users can register, browse products by category, add items to cart, checkout with multiple payment options, and track their orders. Admin can manage products and view sales analytics.';
     document.getElementById('logic-count').textContent = businessLogicInput.value.length;
     
-    requirements = [
-        'Maintain user sessions',
-        'Secure payment handling',
-        'Email notifications for orders'
-    ];
-    renderRequirements();
-    
     // Select Django as default framework
     const djangoRadio = document.getElementById('django');
     if (djangoRadio) {
@@ -486,7 +435,6 @@ async function handleSubmit(e) {
         purpose: purposeInput.value.trim(),
         features: features,
         business_logic: businessLogicInput.value.trim(),
-        requirements: requirements,
         target_framework: targetFrameworkEl.value
     };
     

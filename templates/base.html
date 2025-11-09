@@ -13,20 +13,33 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/welcome.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body{% if request.endpoint == 'main.index' %} class="homepage"{% endif %}>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="welcome-screen">
+        <div class="welcome-logo-container">
+            <div id="welcome-logo" class="welcome-logo welcome-logo-large">
+                <span class="welcome-logo-icon-large crodex-logo-icon" aria-hidden="true">&lt;/&gt;</span>
+                <span class="welcome-logo-text-large">CrodeX</span>
+            </div>
+            <p class="welcome-tagline">Move stacks, not the goalposts.</p>
+        </div>
+    </div>
+
     <nav class="navbar">
         <div class="container">
-            <div class="nav-brand">
-                <i class="fas fa-code" aria-hidden="true"></i>
-                <a href="{{ url_for('main.index') }}">CrodeX</a>
+            <div id="nav-brand" class="nav-brand">
+                <span class="crodex-logo-icon" style="font-size: 1.5rem; color: var(--primary-color); font-weight: 700;" aria-hidden="true">&lt;/&gt;</span>
+                <a href="{{ url_for('main.index') }}" aria-label="CrodeX Home">CrodeX</a>
             </div>
             <div class="nav-menu">
                 <a href="{{ url_for('main.index') }}">Home</a>
                 <a href="{{ url_for('upload.upload') }}">Upload</a>
-                <a href="#features">Features</a>
-                <a href="#supported">Frameworks</a>
+                <a href="{{ url_for('main.index') }}#features">Features</a>
+                <a href="{{ url_for('main.index') }}#supported">Frameworks</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
             </div>
         </div>
     </nav>
@@ -51,9 +64,7 @@
         <div class="container">
             <p>&copy; 2025 CrodeX. All rights reserved.</p>
             <div class="footer-links">
-                <a href="#privacy">Privacy Policy</a>
-                <a href="#terms">Terms of Service</a>
-                <a href="#contact">Contact</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
             </div>
         </div>
     </footer>
@@ -72,6 +83,7 @@
 
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api_client.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/welcome.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
