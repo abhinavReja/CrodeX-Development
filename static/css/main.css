@@ -77,11 +77,16 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    transition: opacity 0.5s ease-in;
 }
 
-.nav-brand i {
+.nav-brand .crodex-logo-icon {
     font-size: 1.5rem;
     color: var(--primary-color);
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-brand a {

@@ -1,0 +1,168 @@
+/* Welcome Screen Styles */
+
+/* Welcome Screen Overlay */
+.welcome-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.welcome-screen.hiding {
+    background-color: transparent;
+    transition: background-color 0.4s ease-out;
+    pointer-events: none;
+}
+
+.welcome-screen.hiding .welcome-tagline {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.welcome-screen.hidden {
+    display: none;
+}
+
+/* Welcome Logo Container */
+.welcome-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    position: relative;
+}
+
+/* Large Welcome Logo */
+.welcome-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-logo-large {
+    transform: scale(1);
+}
+
+.welcome-logo-icon-large {
+    font-size: 6rem;
+    color: #007bff;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.05em;
+}
+
+.welcome-logo-text-large {
+    font-size: 5rem;
+    font-weight: 700;
+    color: #007bff;
+    letter-spacing: -0.02em;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Welcome Tagline */
+.welcome-tagline {
+    font-size: 1.5rem;
+    color: var(--gray-600);
+    font-weight: 400;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.5s forwards;
+    text-align: center;
+    margin-top: 1rem;
+    transition: opacity 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Logo Icon Style - Used in both welcome screen and navbar */
+.crodex-logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    line-height: 1;
+    font-feature-settings: "liga" off;
+    letter-spacing: -0.05em;
+}
+
+/* Navbar Logo (small) - Initially hidden during welcome screen */
+body.welcome-active .navbar #nav-brand {
+    opacity: 0 !important;
+    visibility: visible; /* Keep visible for measurements, just transparent */
+    transition: opacity 0.2s ease-in 0.95s; /* Fade in when welcome logo reaches position */
+}
+
+.navbar #nav-brand.visible {
+    opacity: 1 !important;
+    visibility: visible;
+}
+
+/* Animation for logo transition from welcome to navbar */
+.welcome-logo.transitioning {
+    position: fixed;
+    z-index: 10001;
+    pointer-events: none;
+    opacity: 1; /* Logo stays fully visible throughout the entire transition */
+    /* Transition duration will be set dynamically in JavaScript */
+}
+
+/* Ensure body doesn't scroll during welcome screen */
+body.welcome-active {
+    overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .welcome-logo-icon-large {
+        font-size: 4rem;
+    }
+    
+    .welcome-logo-text-large {
+        font-size: 3.5rem;
+    }
+    
+    .welcome-tagline {
+        font-size: 1.25rem;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-logo-icon-large {
+        font-size: 3rem;
+    }
+    
+    .welcome-logo-text-large {
+        font-size: 2.5rem;
+    }
+    
+    .welcome-tagline {
+        font-size: 1rem;
+    }
+}
+

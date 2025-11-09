@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show upload progress
         showUploadProgress();
         uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Uploading...';
+        uploadBtn.innerHTML = '<span class="loading-spinner"></span>Uploading...';
 
         // Create FormData
         const formData = new FormData();
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // Change button to "Continue" and enable it
-                        uploadBtn.textContent = 'Continue & Analyze';
+                        uploadBtn.innerHTML = '<i class="fas fa-arrow-right" style="margin-right: 0.5rem;"></i>Continue & Analyze';
                         uploadBtn.disabled = false;
                         uploadBtn.type = 'button'; // Change to button to prevent form submission
                         uploadBtn.onclick = async function(e) {
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset upload state
     function resetUploadState() {
         uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Upload File';
+        uploadBtn.innerHTML = '<i class="fas fa-upload" style="margin-right: 0.5rem;"></i>Upload File';
         uploadBtn.type = 'submit'; // Reset to submit button
         uploadBtn.onclick = null; // Remove custom onclick handler
         hideUploadProgress();
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Disable button and show loading
         uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Analyzing...';
+        uploadBtn.innerHTML = '<span class="loading-spinner"></span>Analyzing...';
         updateUploadProgress(0, 'Starting analysis...');
         
         try {
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showValidationSuccess('Upload complete! You can continue to provide context.');
             updateUploadProgress(100, 'Ready');
             uploadBtn.disabled = false;
-            uploadBtn.textContent = 'Continue to Context Form';
+            uploadBtn.innerHTML = '<i class="fas fa-arrow-right" style="margin-right: 0.5rem;"></i>Continue to Context Form';
             uploadBtn.onclick = function(e) {
                 e.preventDefault();
                 if (redirectUrl) {

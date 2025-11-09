@@ -2,6 +2,16 @@
 
 {% block title %}Home - CrodeX{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+<style>
+    /* Background image with Flask url_for for proper URL generation */
+    body.homepage::before {
+        background-image: url('{{ url_for("static", filename="images/artificial-intelligence-thought-process-thinking-human-brain-vector-illustration_531521-2275.jpg") }}');
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section">
