@@ -1,0 +1,1472 @@
+# 👨‍💻 KEYUR - FLASK BACKEND & API DEVELOPMENT
+
+## 📋 RESPONSIBILITIES
+- Flask application setup and configuration
+- All REST API endpoints
+- Session management
+- Request/response handling
+- Error handling and validation
+- CORS and security
+- API documentation
+
+## 🗂 FILE STRUCTURE
+
+
+├── app.py                      # Main Flask application
+├── config.py                   # Configuration settings
+├── requirements.txt            # Python dependencies
+├── routes/
+│   ├── __init__.py
+│   ├── upload_routes.py       # Upload endpoints
+│   ├── analysis_routes.py     # Analysis endpoints
+│   ├── conversion_routes.py   # Conversion endpoints
+│   └── download_routes.py     # Download endpoints
+├── middleware/
+│   ├── __init__.py
+│   ├── error_handler.py       # Error handling
+│   ├── validation.py          # Request validation
+│   └── session_manager.py     # Session management
+└── schemas/
+    ├── __init__.py
+    ├── upload_schema.py       # Upload validation schemas
+    ├── context_schema.py      # Context validation schemas
+    └── conversion_schema.py   # Conversion validation schemas
+
+
+## 📄 COMPLETE IMPLEMENTATION
+
+### *1. Main Flask Application* (app.py)
+
+`python
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_session import Session
+from config import Config
+import os
+import logging
+from datetime import timedelta
+
+# Import routes
+from routes.upload_routes import upload_bp
+from routes.analysis_routes import analysis_bp
+from routes.conversion_routes import conversion_bp
+from routes.download_routes import download_bp
+
+# Import middleware
+from middleware.error_handler import register_error_handlers
+from middleware.session_manager import setup_session_manager
+
+def create_app(config_class=Config):
+    """
+    Application Factory Pattern
+    Creates and configures Flask application
+    """
+    
+    # Initialize Flask app
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    
+    # Setup logging
+    setup_logging(app)
+    
+    # Initialize extensions
+    setup_extensions(app)
+    
+    # Register blueprints
+    register_blueprints(app)
+    
+    # Register error handlers
+    register_error_handlers(app)
+    
+    # Setup session manager
+    setup_session_manager(app)
+    
+    # Health check endpoint
+    @app.route('/health', methods=['GET'])
+    def health_check():
+        """Health check endpoint"""
+        return jsonify({
+            'status': 'healthy',
+            'service': 'converter-api',
+            'version': '1.0.0'
+        }), 200
+    
+    # Root endpoint
+    @app.route('/', methods=['GET'])
+    def index():
+        """API information endpoint"""
+        return jsonify({
+            'name': 'Code Converter API',
+            'version': '1.0.0',
+            'endpoints': {
+                'upload': '/api/upload',
+                'analyze': '/api/analyze',
+                'confirm_context': '/api/confirm-context',
+                'convert': '/api/convert',
+                'download': '/api/download/<project_id>',
+                'status': '/api/status/<project_id>'
+            },
+            'docs': '/api/docs'
+        }), 200
+    
+    return app
+
+def setup_logging(app):
+    """Configure application logging"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('app.log'),
+            logging.StreamHandler()
+        ]
+    )
+    
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Application logging configured')
+
+def setup_extensions(app):
+    """Initialize Flask extensions"""
+    
+    # CORS configuration
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": app.config['CORS_ORIGINS'],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "expose_headers": ["Content-Disposition"],
+            "supports_credentials": True
+        }
+    })
+    
+    # Session configuration
+    Session(app)
+    
+    # Create required directories
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+    
+    app.logger.info('Extensions initialized')
+
+def register_blueprints(app):
+    """Register application blueprints"""
+    
+    # Register with /api prefix
+    app.register_blueprint(upload_bp, url_prefix='/api')
+    app.register_blueprint(analysis_bp, url_prefix='/api')
+    app.register_blueprint(conversion_bp, url_prefix='/api')
+    app.register_blueprint(download_bp, url_prefix='/api')
+    
+    app.logger.info('Blueprints registered')
+
+# Create application instance
+app = create_app()
+
+if __name__ == '__main__':
+    # Development server
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )
+`
+
+### *2. Configuration* (config.py)
+
+`python
+import os
+from datetime import timedelta
+
+class Config:
+    """Base configuration"""
+    
+    # Flask configuration
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    DEBUG = False
+    TESTING = False
+    
+    # Session configuration
+    SESSION_TYPE = 'filesystem'
+    SESSION_FILE_DIR = os.path.join(os.getcwd(), 'flask_sessions')
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
+    SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # File upload configuration
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp', 'uploads')
+    ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz', 'rar'}
+    
+    # CORS configuration
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    
+    # Claude API configuration
+    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    
+    # Cleanup configuration
+    CLEANUP_INTERVAL_HOURS = 2
+    MAX_PROJECT_AGE_HOURS = 4
+    
+    # Rate limiting (optional)
+    RATELIMIT_ENABLED = False
+    RATELIMIT_DEFAULT = "100 per hour"
+    
+    # Logging
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_FILE = 'app.log'
+
+class DevelopmentConfig(Config):
+    """Development configuration"""
+    DEBUG = True
+    SESSION_COOKIE_SECURE = False
+    CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
+
+class ProductionConfig(Config):
+    """Production configuration"""
+    DEBUG = False
+    SESSION_TYPE = 'redis'  # Use Redis in production
+    SESSION_REDIS = os.getenv('REDIS_URL', 'redis://localhost:6379')
+    RATELIMIT_ENABLED = True
+
+class TestingConfig(Config):
+    """Testing configuration"""
+    TESTING = True
+    SESSION_TYPE = 'filesystem'
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp', 'test_uploads')
+
+# Configuration dictionary
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}
+`
+
+### *3. Upload Routes* (routes/upload_routes.py)
+
+`python
+from flask import Blueprint, request, jsonify, session, current_app
+from werkzeug.utils import secure_filename
+import os
+import uuid
+from datetime import datetime
+
+from schemas.upload_schema import UploadValidator
+from middleware.validation import validate_request
+from services.claude_api import ClaudeService
+from utils.file_manager import FileManager
+
+upload_bp = Blueprint('upload', __name__)
+
+@upload_bp.route('/upload', methods=['POST'])
+@validate_request(UploadValidator)
+def upload_project():
+    """
+    Upload and extract project ZIP file
+    
+    Request:
+        - file: ZIP file (multipart/form-data)
+        
+    Response:
+        {
+            "status": "success",
+            "project_id": "uuid",
+            "message": "Project uploaded successfully",
+            "file_info": {
+                "filename": "project.zip",
+                "size": 1024000,
+                "files_count": 45
+            }
+        }
+    """
+    
+    try:
+        # Get uploaded file
+        if 'file' not in request.files:
+            return jsonify({
+                'status': 'error',
+                'message': 'No file uploaded'
+            }), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({
+                'status': 'error',
+                'message': 'No file selected'
+            }), 400
+        
+        # Validate file extension
+        if not allowed_file(file.filename):
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid file type. Only ZIP files are allowed.'
+            }), 400
+        
+        # Generate unique project ID
+        project_id = str(uuid.uuid4())
+        
+        # Initialize file manager
+        file_manager = FileManager(current_app.config['UPLOAD_FOLDER'])
+        
+        # Create project directory
+        project_path = file_manager.create_project_directory(project_id)
+        
+        # Save uploaded file
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(project_path, filename)
+        file.save(file_path)
+        
+        # Get file size
+        file_size = os.path.getsize(file_path)
+        
+        # Extract ZIP file
+        extracted_path = file_manager.extract_zip(file_path, project_path)
+        
+        # Count extracted files
+        files_count = file_manager.count_files(extracted_path)
+        
+        # Load file contents
+        files_dict = file_manager.load_files(extracted_path)
+        
+        # Store in session
+        session['project_id'] = project_id
+        session['project_path'] = project_path
+        session['extracted_path'] = extracted_path
+        session['upload_timestamp'] = datetime.now().isoformat()
+        session['files_dict'] = files_dict  # Store for later use
+        session.modified = True
+        
+        # Log upload
+        current_app.logger.info(f"Project uploaded: {project_id} - {files_count} files")
+        
+        return jsonify({
+            'status': 'success',
+            'project_id': project_id,
+            'message': 'Project uploaded successfully',
+            'file_info': {
+                'filename': filename,
+                'size': file_size,
+                'files_count': files_count
+            }
+        }), 201
+        
+    except Exception as e:
+        current_app.logger.error(f"Upload error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Upload failed: {str(e)}'
+        }), 500
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+`
+
+### *4. Analysis Routes* (routes/analysis_routes.py)
+
+`python
+from flask import Blueprint, request, jsonify, session, current_app
+from schemas.context_schema import ContextValidator
+from middleware.validation import validate_request
+from services.claude_api import ClaudeService
+from services.analyzer import FrameworkAnalyzer
+
+analysis_bp = Blueprint('analysis', __name__)
+
+@analysis_bp.route('/analyze', methods=['POST'])
+def analyze_project():
+    """
+    Analyze uploaded project to detect framework
+    
+    Response:
+        {
+            "status": "success",
+            "project_id": "uuid",
+            "analysis": {
+                "framework": "Laravel",
+                "confidence": 95,
+                "structure": {...},
+                "suggestions": [...]
+            }
+        }
+    """
+    
+    try:
+        # Get project from session
+        project_id = session.get('project_id')
+        files_dict = session.get('files_dict')
+        
+        if not project_id or not files_dict:
+            return jsonify({
+                'status': 'error',
+                'message': 'No project found. Please upload a project first.'
+            }), 400
+        
+        # Initialize services
+        claude = ClaudeService(current_app.config['ANTHROPIC_API_KEY'])
+        analyzer = FrameworkAnalyzer()
+        
+        # Step 1: Quick local analysis
+        current_app.logger.info(f"Starting local analysis for {project_id}")
+        local_analysis = analyzer.analyze_structure(files_dict)
+        
+        # Step 2: Claude AI analysis
+        current_app.logger.info(f"Starting AI analysis for {project_id}")
+        ai_analysis = claude.analyze_project_structure(files_dict)
+        
+        # Combine results
+        combined_analysis = {
+            'framework': ai_analysis.get('framework', 'Unknown'),
+            'confidence': ai_analysis.get('confidence', 0),
+            'structure': ai_analysis.get('structure', {}),
+            'dependencies': ai_analysis.get('dependencies', []),
+            'database': ai_analysis.get('database', {}),
+            'local_detection': local_analysis.get('primary_framework'),
+            'file_stats': local_analysis.get('file_stats', {}),
+            'notes': ai_analysis.get('notes', '')
+        }
+        
+        # Store analysis in session
+        session['analysis'] = combined_analysis
+        session['analysis_timestamp'] = datetime.now().isoformat()
+        session.modified = True
+        
+        current_app.logger.info(f"Analysis completed: {project_id} - {combined_analysis['framework']}")
+        
+        return jsonify({
+            'status': 'success',
+            'project_id': project_id,
+            'analysis': combined_analysis
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Analysis error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Analysis failed: {str(e)}'
+        }), 500
+
+@analysis_bp.route('/confirm-context', methods=['POST'])
+@validate_request(ContextValidator)
+def confirm_context():
+    """
+    Confirm or modify project context
+    
+    Request:
+        {
+            "purpose": "E-commerce platform",
+            "features": ["user auth", "payment gateway"],
+            "business_logic": "Process orders and payments",
+            "requirements": ["maintain user sessions", "secure payments"]
+        }
+        
+    Response:
+        {
+            "status": "success",
+            "message": "Context confirmed",
+            "project_id": "uuid"
+        }
+    """
+    
+    try:
+        # Get project from session
+        project_id = session.get('project_id')
+        
+        if not project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active project found'
+            }), 400
+        
+        # Get context from request
+        context_data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['purpose', 'features', 'business_logic']
+        for field in required_fields:
+            if field not in context_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+        
+        # Store context in session
+        session['project_context'] = {
+            'purpose': context_data['purpose'],
+            'features': context_data['features'],
+            'business_logic': context_data['business_logic'],
+            'requirements': context_data.get('requirements', []),
+            'confirmed_at': datetime.now().isoformat()
+        }
+        session.modified = True
+        
+        current_app.logger.info(f"Context confirmed for project: {project_id}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Context confirmed successfully',
+            'project_id': project_id
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Context confirmation error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Context confirmation failed: {str(e)}'
+        }), 500
+
+@analysis_bp.route('/status/<project_id>', methods=['GET'])
+def get_project_status(project_id):
+    """
+    Get current project status
+    
+    Response:
+        {
+            "status": "success",
+            "project": {
+                "id": "uuid",
+                "state": "uploaded|analyzed|converting|completed",
+                "progress": 75,
+                "current_step": "Converting files"
+            }
+        }
+    """
+    
+    try:
+        # Verify project belongs to session
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Get project state from session
+        state = 'uploaded'
+        progress = 0
+        current_step = 'Project uploaded'
+        
+        if session.get('analysis'):
+            state = 'analyzed'
+            progress = 33
+            current_step = 'Analysis completed'
+        
+        if session.get('project_context'):
+            state = 'context_confirmed'
+            progress = 50
+            current_step = 'Context confirmed'
+        
+        if session.get('conversion_progress'):
+            state = 'converting'
+            progress = session['conversion_progress']
+            current_step = session.get('conversion_step', 'Converting files')
+        
+        if session.get('conversion_complete'):
+            state = 'completed'
+            progress = 100
+            current_step = 'Conversion completed'
+        
+        return jsonify({
+            'status': 'success',
+            'project': {
+                'id': project_id,
+                'state': state,
+                'progress': progress,
+                'current_step': current_step,
+                'upload_timestamp': session.get('upload_timestamp'),
+                'analysis': session.get('analysis', {}).get('framework') if session.get('analysis') else None
+            }
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Status check error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Status check failed: {str(e)}'
+        }), 500
+`
+
+### *5. Conversion Routes* (routes/conversion_routes.py)
+
+`python
+from flask import Blueprint, request, jsonify, session, current_app
+from schemas.conversion_schema import ConversionValidator
+from middleware.validation import validate_request
+from services.converter import ProjectConverter
+from datetime import datetime
+
+conversion_bp = Blueprint('conversion', __name__)
+
+@conversion_bp.route('/convert', methods=['POST'])
+@validate_request(ConversionValidator)
+def convert_project():
+    """
+    Convert project to target framework
+    
+    Request:
+        {
+            "target_framework": "Django"
+        }
+        
+    Response:
+        {
+            "status": "success",
+            "project_id": "uuid",
+            "conversion": {
+                "files_converted": 45,
+                "warnings": 3,
+                "download_url": "/api/download/uuid"
+            }
+        }
+    """
+    
+    try:
+        # Get project data from session
+        project_id = session.get('project_id')
+        files_dict = session.get('files_dict')
+        analysis = session.get('analysis')
+        context = session.get('project_context')
+        
+        # Validate session data
+        if not all([project_id, files_dict, analysis, context]):
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing project data. Please complete upload and analysis first.'
+            }), 400
+        
+        # Get target framework from request
+        data = request.get_json()
+        target_framework = data['target_framework']
+        
+        # Initialize converter
+        converter = ProjectConverter(current_app.config['ANTHROPIC_API_KEY'])
+        
+        # Progress tracking function
+        def progress_callback(stage, message):
+            session['conversion_stage'] = stage
+            session['conversion_message'] = message
+            
+            # Calculate progress percentage
+            stage_progress = {
+                'analysis': 10,
+                'conversion': 70,
+                'documentation': 90
+            }
+            session['conversion_progress'] = stage_progress.get(stage, 0)
+            session.modified = True
+            
+            current_app.logger.info(f"Conversion progress - {stage}: {message}")
+        
+        # Start conversion
+        current_app.logger.info(f"Starting conversion: {project_id} -> {target_framework}")
+        
+        conversion_result = converter.full_conversion_pipeline(
+            files=files_dict,
+            target_framework=target_framework,
+            project_context=context,
+            progress_callback=progress_callback
+        )
+        
+        # Store conversion results in session
+        session['conversion_result'] = conversion_result
+        session['conversion_complete'] = True
+        session['conversion_progress'] = 100
+        session['target_framework'] = target_framework
+        session['conversion_timestamp'] = datetime.now().isoformat()
+        session.modified = True
+        
+        # Save converted files to disk
+        from utils.file_manager import FileManager
+        file_manager = FileManager(current_app.config['UPLOAD_FOLDER'])
+        
+        project_path = session.get('project_path')
+        converted_path = file_manager.save_converted_files(
+            project_path,
+            conversion_result['converted_files']
+        )
+        
+        session['converted_path'] = converted_path
+        session.modified = True
+        
+        current_app.logger.info(f"Conversion completed: {project_id}")
+        
+        return jsonify({
+            'status': 'success',
+            'project_id': project_id,
+            'conversion': {
+                'source_framework': conversion_result['source_framework'],
+                'target_framework': target_framework,
+                'files_converted': len(conversion_result['converted_files']),
+                'warnings': conversion_result['summary']['conversion_stats']['total_warnings'],
+                'download_url': f'/api/download/{project_id}'
+            },
+            'summary': conversion_result['summary']
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Conversion error: {str(e)}")
+        
+        # Store error in session
+        session['conversion_error'] = str(e)
+        session.modified = True
+        
+        return jsonify({
+            'status': 'error',
+            'message': f'Conversion failed: {str(e)}'
+        }), 500
+
+@conversion_bp.route('/conversion-progress/<project_id>', methods=['GET'])
+def get_conversion_progress(project_id):
+    """
+    Get real-time conversion progress
+    
+    Response:
+        {
+            "status": "success",
+            "progress": {
+                "percentage": 65,
+                "stage": "conversion",
+                "message": "Converting file 30/45"
+            }
+        }
+    """
+    
+    try:
+        # Verify project
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Get progress from session
+        progress = {
+            'percentage': session.get('conversion_progress', 0),
+            'stage': session.get('conversion_stage', 'pending'),
+            'message': session.get('conversion_message', 'Waiting to start'),
+            'complete': session.get('conversion_complete', False),
+            'error': session.get('conversion_error')
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'progress': progress
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Progress check error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Progress check failed: {str(e)}'
+        }), 500
+`
+
+### *6. Download Routes* (routes/download_routes.py)
+
+`python
+from flask import Blueprint, send_file, session, current_app, jsonify
+import os
+import zipfile
+import io
+from utils.file_manager import FileManager
+
+download_bp = Blueprint('download', __name__)
+
+@download_bp.route('/download/<project_id>', methods=['GET'])
+def download_converted_project(project_id):
+    """
+    Download converted project as ZIP
+    
+    Response:
+        ZIP file stream
+    """
+    
+    try:
+        # Verify project
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Check if conversion is complete
+        if not session.get('conversion_complete'):
+            return jsonify({
+                'status': 'error',
+                'message': 'Conversion not complete'
+            }), 400
+        
+        # Get converted files path
+        converted_path = session.get('converted_path')
+        
+        if not converted_path or not os.path.exists(converted_path):
+            return jsonify({
+                'status': 'error',
+                'message': 'Converted files not found'
+            }), 404
+        
+        # Create ZIP file in memory
+        current_app.logger.info(f"Creating ZIP for download: {project_id}")
+        
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # Add all converted files
+            for root, dirs, files in os.walk(converted_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arc_name = os.path.relpath(file_path, converted_path)
+                    zip_file.write(file_path, arc_name)
+            
+            # Add migration guide
+            conversion_result = session.get('conversion_result', {})
+            migration_guide = conversion_result.get('migration_guide', '')
+            
+            if migration_guide:
+                zip_file.writestr('MIGRATION_GUIDE.md', migration_guide)
+            
+            # Add summary
+            summary = conversion_result.get('summary', {})
+            if summary:
+                import json
+                zip_file.writestr('conversion_summary.json', 
+                                json.dumps(summary, indent=2))
+        
+        zip_buffer.seek(0)
+        
+        # Get target framework for filename
+        target_framework = session.get('target_framework', 'converted')
+        filename = f'{target_framework}_project_{project_id[:8]}.zip'
+        
+        current_app.logger.info(f"Sending ZIP file: {filename}")
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Download error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Download failed: {str(e)}'
+        }), 500
+
+@download_bp.route('/download/<project_id>/migration-guide', methods=['GET'])
+def download_migration_guide(project_id):
+    """
+    Download only the migration guide
+    
+    Response:
+        Markdown file
+    """
+    
+    try:
+        # Verify project
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Get migration guide from session
+        conversion_result = session.get('conversion_result', {})
+        migration_guide = conversion_result.get('migration_guide', '')
+        
+        if not migration_guide:
+            return jsonify({
+                'status': 'error',
+                'message': 'Migration guide not found'
+            }), 404
+        
+        # Create file buffer
+        buffer = io.BytesIO(migration_guide.encode('utf-8'))
+        buffer.seek(0)
+        
+        filename = f'migration_guide_{project_id[:8]}.md'
+        
+        return send_file(
+            buffer,
+            mimetype='text/markdown',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Migration guide download error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Download failed: {str(e)}'
+        }), 500
+
+@download_bp.route('/cleanup/<project_id>', methods=['DELETE'])
+def cleanup_project(project_id):
+    """
+    Manual cleanup of project files
+    
+    Response:
+        {
+            "status": "success",
+            "message": "Project files cleaned up"
+        }
+    """
+    
+    try:
+        # Verify project
+        session_project_id = session.get('project_id')
+        
+        if session_project_id != project_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid project ID'
+            }), 403
+        
+        # Get project path
+        project_path = session.get('project_path')
+        
+        if project_path and os.path.exists(project_path):
+            # Cleanup files
+            file_manager = FileManager(current_app.config['UPLOAD_FOLDER'])
+            file_manager.cleanup_project(project_path)
+            
+            current_app.logger.info(f"Project cleaned up: {project_id}")
+        
+        # Clear session
+        session.clear()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Project files cleaned up successfully'
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Cleanup error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Cleanup failed: {str(e)}'
+        }), 500
+`
+
+### *7. Error Handler Middleware* (middleware/error_handler.py)
+
+`python
+from flask import jsonify, current_app
+from werkzeug.exceptions import HTTPException
+import traceback
+
+def register_error_handlers(app):
+    """Register application error handlers"""
+    
+    @app.errorhandler(400)
+    def bad_request(e):
+        """Handle 400 Bad Request"""
+        return jsonify({
+            'status': 'error',
+            'code': 400,
+            'message': 'Bad request',
+            'details': str(e)
+        }), 400
+    
+    @app.errorhandler(401)
+    def unauthorized(e):
+        """Handle 401 Unauthorized"""
+        return jsonify({
+            'status': 'error',
+            'code': 401,
+            'message': 'Unauthorized'
+        }), 401
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        """Handle 403 Forbidden"""
+        return jsonify({
+            'status': 'error',
+            'code': 403,
+            'message': 'Access forbidden'
+        }), 403
+    
+    @app.errorhandler(404)
+    def not_found(e):
+        """Handle 404 Not Found"""
+        return jsonify({
+            'status': 'error',
+            'code': 404,
+            'message': 'Resource not found'
+        }), 404
+    
+    @app.errorhandler(413)
+    def request_entity_too_large(e):
+        """Handle 413 Payload Too Large"""
+        return jsonify({
+            'status': 'error',
+            'code': 413,
+            'message': 'File too large. Maximum size is 100MB.'
+        }), 413
+    
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        """Handle 500 Internal Server Error"""
+        current_app.logger.error(f"Internal server error: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        
+        return jsonify({
+            'status': 'error',
+            'code': 500,
+            'message': 'Internal server error',
+            'details': str(e) if app.debug else 'An unexpected error occurred'
+        }), 500
+    
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        """Handle all unhandled exceptions"""
+        
+        # Pass through HTTP errors
+        if isinstance(e, HTTPException):
+            return e
+        
+        # Log the error
+        current_app.logger.error(f"Unhandled exception: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        
+        # Return generic error response
+        return jsonify({
+            'status': 'error',
+            'code': 500,
+            'message': 'An unexpected error occurred',
+            'details': str(e) if app.debug else None
+        }), 500
+`
+
+### *8. Request Validation Middleware* (middleware/validation.py)
+
+`python
+from functools import wraps
+from flask import request, jsonify
+
+def validate_request(validator_class):
+    """
+    Decorator to validate request data
+    
+    Usage:
+        @validate_request(UploadValidator)
+        def upload():
+            ...
+    """
+    
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            validator = validator_class()
+            
+            # Validate based on request content type
+            if request.is_json:
+                errors = validator.validate_json(request.get_json())
+            elif request.files:
+                errors = validator.validate_files(request.files)
+            else:
+                errors = validator.validate_form(request.form)
+            
+            if errors:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Validation failed',
+                    'errors': errors
+                }), 400
+            
+            return f(*args, **kwargs)
+        
+        return decorated_function
+    return decorator
+
+class BaseValidator:
+    """Base validator class"""
+    
+    def validate_json(self, data):
+        """Override in subclass"""
+        return []
+    
+    def validate_files(self, files):
+        """Override in subclass"""
+        return []
+    
+    def validate_form(self, form):
+        """Override in subclass"""
+        return []
+`
+
+### *9. Session Manager* (middleware/session_manager.py)
+
+`python
+from flask import session
+from datetime import datetime, timedelta
+
+def setup_session_manager(app):
+    """Setup session management hooks"""
+    
+    @app.before_request
+    def check_session_timeout():
+        """Check if session has timed out"""
+        if 'upload_timestamp' in session:
+            upload_time = datetime.fromisoformat(session['upload_timestamp'])
+            max_age = timedelta(hours=app.config['MAX_PROJECT_AGE_HOURS'])
+            
+            if datetime.now() - upload_time > max_age:
+                # Session expired, cleanup
+                session.clear()
+    
+    @app.after_request
+    def update_session_activity(response):
+        """Update last activity timestamp"""
+        if 'project_id' in session:
+            session['last_activity'] = datetime.now().isoformat()
+            session.modified = True
+        
+        return response
+
+def get_session_data():
+    """Get all session data"""
+    return {
+        'project_id': session.get('project_id'),
+        'upload_timestamp': session.get('upload_timestamp'),
+        'analysis': session.get('analysis'),
+        'context': session.get('project_context'),
+        'conversion_complete': session.get('conversion_complete', False),
+        'last_activity': session.get('last_activity')
+    }
+
+def clear_session_data():
+    """Clear all session data"""
+    session.clear()
+`
+
+### *10. Validation Schemas* (schemas/upload_schema.py)
+
+`python
+from middleware.validation import BaseValidator
+
+class UploadValidator(BaseValidator):
+    """Validator for upload requests"""
+    
+    def validate_files(self, files):
+        errors = []
+        
+        if 'file' not in files:
+            errors.append('No file provided')
+            return errors
+        
+        file = files['file']
+        
+        if file.filename == '':
+            errors.append('No file selected')
+        
+        # Check file extension
+        allowed_extensions = {'zip', 'tar', 'gz'}
+        if '.' not in file.filename or \
+           file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            errors.append('Invalid file type. Only ZIP files are allowed.')
+        
+        return errors
+`
+
+### *11. Context Schema* (schemas/context_schema.py)
+
+`python
+from middleware.validation import BaseValidator
+
+class ContextValidator(BaseValidator):
+    """Validator for context confirmation requests"""
+    
+    def validate_json(self, data):
+        errors = []
+        
+        if not data:
+            errors.append('No data provided')
+            return errors
+        
+        # Required fields
+        required_fields = ['purpose', 'features', 'business_logic']
+        
+        for field in required_fields:
+            if field not in data:
+                errors.append(f'Missing required field: {field}')
+            elif not data[field]:
+                errors.append(f'Field "{field}" cannot be empty')
+        
+        # Validate features is a list
+        if 'features' in data and not isinstance(data['features'], list):
+            errors.append('Features must be a list')
+        
+        return errors
+`
+
+### *12. Conversion Schema* (schemas/conversion_schema.py)
+
+`python
+from middleware.validation import BaseValidator
+
+class ConversionValidator(BaseValidator):
+    """Validator for conversion requests"""
+    
+    SUPPORTED_FRAMEWORKS = [
+        'Django', 'Flask', 'FastAPI',
+        'Laravel', 'Symfony', 'CodeIgniter',
+        'Express.js', 'NestJS', 'Fastify',
+        'Spring Boot', 'ASP.NET Core'
+    ]
+    
+    def validate_json(self, data):
+        errors = []
+        
+        if not data:
+            errors.append('No data provided')
+            return errors
+        
+        # Required field
+        if 'target_framework' not in data:
+            errors.append('Missing required field: target_framework')
+        elif data['target_framework'] not in self.SUPPORTED_FRAMEWORKS:
+            errors.append(f'Unsupported target framework: {data["target_framework"]}')
+            errors.append(f'Supported frameworks: {", ".join(self.SUPPORTED_FRAMEWORKS)}')
+        
+        return errors
+`
+
+### *13. Requirements File* (requirements.txt)
+
+txt
+# Flask and extensions
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Session==0.5.0
+
+# Claude AI
+anthropic==0.7.0
+
+# File handling
+werkzeug==3.0.1
+
+# Session storage (optional, for production)
+redis==5.0.1
+
+# Utilities
+python-dotenv==1.0.0
+
+# Development
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-cov==4.1.0
+
+
+### *14. Environment Variables* (.env)
+
+env
+# Flask configuration
+FLASK_APP=app.py
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here-change-in-production
+
+# Claude API
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
+
+# CORS
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+
+# File upload
+MAX_CONTENT_LENGTH=104857600  # 100MB in bytes
+
+# Session
+SESSION_TYPE=filesystem
+PERMANENT_SESSION_LIFETIME=7200  # 2 hours in seconds
+
+# Redis (for production)
+# REDIS_URL=redis://localhost:6379
+
+# Logging
+LOG_LEVEL=INFO
+
+
+### *15. API Testing Script* (test_api.py)
+
+`python
+import requests
+import json
+from pathlib import Path
+
+BASE_URL = 'http://localhost:5000/api'
+
+def test_full_flow():
+    """Test complete API flow"""
+    
+    # 1. Upload project
+    print("1. Uploading project...")
+    files = {'file': open('test_project.zip', 'rb')}
+    response = requests.post(f'{BASE_URL}/upload', files=files)
+    print(f"Response: {response.status_code}")
+    upload_data = response.json()
+    print(json.dumps(upload_data, indent=2))
+    
+    project_id = upload_data['project_id']
+    
+    # 2. Analyze project
+    print("\n2. Analyzing project...")
+    response = requests.post(f'{BASE_URL}/analyze')
+    print(f"Response: {response.status_code}")
+    analysis_data = response.json()
+    print(json.dumps(analysis_data, indent=2))
+    
+    # 3. Confirm context
+    print("\n3. Confirming context...")
+    context = {
+        'purpose': 'E-commerce platform',
+        'features': ['user authentication', 'shopping cart', 'payment processing'],
+        'business_logic': 'Users can browse products, add to cart, and checkout',
+        'requirements': ['maintain user sessions', 'secure payment handling']
+    }
+    response = requests.post(f'{BASE_URL}/confirm-context', json=context)
+    print(f"Response: {response.status_code}")
+    context_data = response.json()
+    print(json.dumps(context_data, indent=2))
+    
+    # 4. Convert project
+    print("\n4. Converting project...")
+    conversion_request = {
+        'target_framework': 'Django'
+    }
+    response = requests.post(f'{BASE_URL}/convert', json=conversion_request)
+    print(f"Response: {response.status_code}")
+    conversion_data = response.json()
+    print(json.dumps(conversion_data, indent=2))
+    
+    # 5. Download result
+    print("\n5. Downloading result...")
+    response = requests.get(f'{BASE_URL}/download/{project_id}')
+    print(f"Response: {response.status_code}")
+    
+    if response.status_code == 200:
+        with open('converted_project.zip', 'wb') as f:
+            f.write(response.content)
+        print("Downloaded: converted_project.zip")
+
+if __name__ == '__main__':
+    test_full_flow()
+`
+
+---
+
+## 🧪 KEYUR'S TESTING CHECKLIST
+
+1. *Upload Endpoint*
+   - ✅ Valid ZIP upload
+   - ✅ Invalid file type rejection
+   - ✅ File size validation
+   - ✅ Session creation
+
+2. *Analysis Endpoint*
+   - ✅ Framework detection accuracy
+   - ✅ Structure analysis
+   - ✅ Session data storage
+
+3. *Context Endpoint*
+   - ✅ Context validation
+   - ✅ Required fields check
+   - ✅ Session update
+
+4. *Conversion Endpoint*
+   - ✅ Target framework validation
+   - ✅ Progress tracking
+   - ✅ Error handling
+
+5. *Download Endpoint*
+   - ✅ ZIP file generation
+   - ✅ Session verification
+   - ✅ File cleanup
+
+6. *Error Handling*
+   - ✅ All HTTP error codes
+   - ✅ Validation errors
+   - ✅ Exception handling
+
+---
+
+## 📊 API DOCUMENTATION
+
+Create a simple API documentation page:
+
+`python
+from flask import Blueprint, render_template_string
+
+docs_bp = Blueprint('docs', __name__)
+
+API_DOCS = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Converter API Documentation</title>
+    <style>
+        body { font-family: Arial; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .endpoint { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .method { color: white; padding: 5px 10px; border-radius: 3px; }
+        .post { background: #49cc90; }
+        .get { background: #61affe; }
+        .delete { background: #f93e3e; }
+        code { background: #eee; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Code Converter API Documentation</h1>
+    
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /api/upload</h3>
+        <p>Upload project ZIP file</p>
+        <p><strong>Request:</strong> multipart/form-data with 'file' field</p>
+        <p><strong>Response:</strong> Project ID and file info</p>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /api/analyze</h3>
+        <p>Analyze uploaded project</p>
+        <p><strong>Response:</strong> Framework detection and structure analysis</p>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /api/confirm-context</h3>
+        <p>Confirm project context</p>
+        <p><strong>Request:</strong> JSON with purpose, features, business_logic</p>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /api/convert</h3>
+        <p>Convert to target framework</p>
+        <p><strong>Request:</strong> JSON with target_framework</p>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method get">GET</span> /api/download/{project_id}</h3>
+        <p>Download converted project</p>
+        <p><strong>Response:</strong> ZIP file</p>
+    </div>
+</body>
+</html>
+"""
+
+@docs_bp.route('/docs', methods=['GET'])
+def api_documentation():
+    return render_template_string(API_DOCS)
+`
+
+This completes KEYUR's Flask backend implementation!

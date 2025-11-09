@@ -2,50 +2,63 @@ import os
 from datetime import timedelta
 
 class Config:
-    """Base configuration class"""
+    """Base configuration"""
     
-    # Flask
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    # Flask configuration
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    DEBUG = False
+    TESTING = False
     
-    # File Upload
-    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-    ALLOWED_EXTENSIONS = {'zip'}
-    
-    # CORS
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5000').split(',')
-    
-    # Session (using Flask's built-in session with signed cookies)
-    SESSION_COOKIE_NAME = 'session'
+    # Session configuration
+    SESSION_TYPE = 'filesystem'
+    SESSION_FILE_DIR = os.path.join(os.getcwd(), 'flask_sessions')
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
+    SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_SAMESITE = 'Lax'
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     
-    # Database (for future use)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///crodex.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # File upload configuration
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp', 'uploads')
+    ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz', 'rar'}
     
-    # JWT (for future use)
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-string-change-in-production'
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    # CORS configuration
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    
+    # Claude API configuration
+    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    
+    # Cleanup configuration
+    CLEANUP_INTERVAL_HOURS = 2
+    MAX_PROJECT_AGE_HOURS = 4
+    
+    # Rate limiting (optional)
+    RATELIMIT_ENABLED = False
+    RATELIMIT_DEFAULT = "100 per hour"
+    
+    # Logging
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_FILE = 'app.log'
 
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-    TESTING = False
+    SESSION_COOKIE_SECURE = False
+    CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    TESTING = False
+    SESSION_TYPE = 'redis'  # Use Redis in production
+    SESSION_REDIS = os.getenv('REDIS_URL', 'redis://localhost:6379')
+    RATELIMIT_ENABLED = True
 
 class TestingConfig(Config):
     """Testing configuration"""
-    DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
+    SESSION_TYPE = 'filesystem'
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp', 'test_uploads')
 
 # Configuration dictionary
 config = {
@@ -54,4 +67,3 @@ config = {
     'testing': TestingConfig,
     'default': DevelopmentConfig
 }
-
