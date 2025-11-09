@@ -516,6 +516,7 @@ class ProjectConverter:
     def _convert_python_calculations_to_java(self, body: str, form_params: Dict[str, bool]) -> str:
         """Convert Python calculation logic to Java code"""
         if not body:
+            self.logger.debug("_convert_python_calculations_to_java: body is empty")
             return ""
         
         java_lines = []
@@ -523,18 +524,19 @@ class ProjectConverter:
         # Extract if-elif-else blocks for operations
         # Pattern: if operation == "Addition": entry = int(var_1) + int(var_2)
         # Need to handle multiline expressions and elif chains
+        # Improved regex to handle various formatting and be more lenient
         if_elif_pattern = re.compile(
-            r"""(?:^|\n)\s*if\s+(\w+)\s*==\s*['"]([^'"]+)['"]\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:elif|else|return|$))""",
+            r"""(?:^|\n)\s*if\s+(\w+)\s*==\s*['"]([^'"]+)['"]\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:elif|else|return|def|@|\Z))""",
             re.DOTALL | re.MULTILINE
         )
         
         elif_pattern = re.compile(
-            r"""(?:^|\n)\s*elif\s+(\w+)\s*==\s*['"]([^'"]+)['"]\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:elif|else|return|$))""",
+            r"""(?:^|\n)\s*elif\s+(\w+)\s*==\s*['"]([^'"]+)['"]\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:elif|else|return|def|@|\Z))""",
             re.DOTALL | re.MULTILINE
         )
         
-        # Extract else block
-        else_pattern = re.compile(r"""(?:^|\n)\s*else\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:return|$))""", re.DOTALL | re.MULTILINE)
+        # Extract else block - improved to handle more cases
+        else_pattern = re.compile(r"""(?:^|\n)\s*else\s*:\s*(\w+)\s*=\s*(.+?)(?=\n\s*(?:return|def|@|\Z))""", re.DOTALL | re.MULTILINE)
         
         # Find all if-elif blocks
         conditions = []
@@ -545,6 +547,8 @@ class ProjectConverter:
             condition_value = match.group(2)  # e.g., "Addition"
             result_var = match.group(3)  # e.g., "entry"
             expression = match.group(4).strip()  # e.g., "int(var_1) + int(var_2)"
+            
+            self.logger.debug(f"Found if condition: {var_name} == '{condition_value}', {result_var} = {expression}")
             
             # Convert Python expression to Java
             java_expr = self._convert_python_expression_to_java(expression, form_params)
@@ -557,6 +561,8 @@ class ProjectConverter:
             result_var = match.group(3)
             expression = match.group(4).strip()
             
+            self.logger.debug(f"Found elif condition: {var_name} == '{condition_value}', {result_var} = {expression}")
+            
             java_expr = self._convert_python_expression_to_java(expression, form_params)
             conditions.append((var_name, condition_value, result_var, java_expr))
         
@@ -566,7 +572,12 @@ class ProjectConverter:
         for match in else_pattern.finditer(body):
             else_result = match.group(1)
             else_expr = match.group(2).strip()
+            self.logger.debug(f"Found else block: {else_result} = {else_expr}")
             else_expr_java = self._convert_python_expression_to_java(else_expr, form_params)
+        
+        # Log if no conditions were found
+        if not conditions:
+            self.logger.debug(f"No calculation conditions found in body. Body sample: {body[:200]}")
         
         # Generate Java if-else chain
         if conditions:
@@ -596,17 +607,20 @@ class ProjectConverter:
                 indent = "            "
             
             # Generate if-else chain
+            # Use result_var_name consistently to match the declared variable
             for i, (var_name, condition_value, result_var, java_expr) in enumerate(conditions):
                 if i == 0:
                     java_lines.append(f"{indent}if (\"{condition_value}\".equals({var_name})) {{")
                 else:
                     java_lines.append(f"{indent}}} else if (\"{condition_value}\".equals({var_name})) {{")
-                java_lines.append(f"{indent}    {result_var} = String.valueOf({java_expr});")
+                # Use result_var_name to ensure we're assigning to the declared variable
+                java_lines.append(f"{indent}    {result_var_name} = String.valueOf({java_expr});")
             
             # Add else block
             if else_result and else_expr_java:
                 java_lines.append(f"{indent}}} else {{")
-                java_lines.append(f"{indent}    {else_result} = String.valueOf({else_expr_java});")
+                # Use result_var_name for consistency
+                java_lines.append(f"{indent}    {result_var_name} = String.valueOf({else_expr_java});")
             else:
                 java_lines.append(f"{indent}}} else {{")
                 java_lines.append(f"{indent}    {result_var_name} = \"0\";")
@@ -912,14 +926,30 @@ public class ApiController {{
                     # Extract template variables from render_template call
                     template_vars = self._extract_template_variables(body_code)
                     
+                    # Extract declared variables from calculation_code
+                    declared_vars = set()
+                    if calculation_code:
+                        # Find all variable declarations: "String varName =" (with any leading whitespace)
+                        var_decl_pattern = re.compile(r'\s+String\s+(\w+)\s*=')
+                        declared_vars = set(var_decl_pattern.findall(calculation_code))
+                    
                     # Build model attribute assignments
                     model_attrs = []
                     
-                    # Add calculation code
+                    # CRITICAL: Add calculation code FIRST so calculations execute before adding to model
                     if calculation_code:
                         model_attrs.append(calculation_code)
                     
+                    # Declare template variables that aren't already declared in calculation code
+                    # This ensures all template variables exist before we try to use them
+                    # Only declare if not a form parameter and not already declared in calculation code
+                    for var_name in template_vars:
+                        if var_name not in form_params_dict and var_name not in declared_vars:
+                            # Declare variable with default value if not already declared
+                            model_attrs.append(f"        String {var_name} = \"\";")
+                    
                     # Add form parameters to model (so template can repopulate form fields)
+                    # This happens AFTER calculations so form values are available for calculations
                     for param_name in form_params_dict.keys():
                         # Handle null values - use empty string if null
                         model_attrs.append(f"        if ({param_name} != null) {{")
@@ -928,7 +958,7 @@ public class ApiController {{
                         model_attrs.append(f"            model.addAttribute(\"{param_name}\", \"\");")
                         model_attrs.append(f"        }}")
                     
-                    # Add calculated result variables to model
+                    # Add calculated result variables to model AFTER calculations have executed
                     for var_name in template_vars:
                         if var_name not in form_params_dict:  # Don't duplicate form params
                             model_attrs.append(f"        model.addAttribute(\"{var_name}\", {var_name});")
