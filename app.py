@@ -21,6 +21,12 @@ from routes.main_routes import main_bp
 from middleware.error_handler import register_error_handlers
 from middleware.session_manager import setup_session_manager
 
+# Import services for file handling
+from services.analyzer import FrameworkAnalyzer
+from services.file_counter import FileCounter
+from utils.cleanup_manager import CleanupManager
+from utils.file_manager import FileManager
+
 def create_app(config_class=Config):
     """
     Application Factory Pattern
@@ -38,6 +44,9 @@ def create_app(config_class=Config):
     
     # Initialize extensions
     setup_extensions(app)
+    
+    # Initialize services (file handling utilities)
+    setup_services(app)
     
     # Register blueprints
     register_blueprints(app)
@@ -82,6 +91,29 @@ def setup_extensions(app):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     app.logger.info('Extensions initialized')
+
+def setup_services(app):
+    """Initialize shared file-handling services and attach them to the app."""
+    
+    upload_folder = app.config['UPLOAD_FOLDER']
+    
+    file_manager = FileManager(upload_folder)
+    cleanup_manager = CleanupManager(upload_folder)
+    framework_analyzer = FrameworkAnalyzer()
+    file_counter = FileCounter()
+    
+    # Store in app.extensions for blueprint access
+    app.extensions['file_manager'] = file_manager
+    app.extensions['cleanup_manager'] = cleanup_manager
+    app.extensions['framework_analyzer'] = framework_analyzer
+    app.extensions['file_counter'] = file_counter
+    
+    # Perform a light cleanup on startup (best-effort)
+    try:
+        cleanup_manager.cleanup_old_projects()
+        app.logger.info('Startup cleanup completed')
+    except Exception as exc:  # pylint: disable=broad-except
+        app.logger.warning('Initial cleanup skipped: %s', exc)
 
 def register_blueprints(app):
     """Register application blueprints"""
