@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from schemas.context_schema import ContextValidator
 from middleware.validation import validate_request
-from services.claude_api import ClaudeService
+from services.gemini_api import GeminiService
 from services.analyzer import FrameworkAnalyzer
 
 analysis_bp = Blueprint('analysis', __name__)

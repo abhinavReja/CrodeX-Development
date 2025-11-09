@@ -5,8 +5,8 @@ import uuid
 from datetime import datetime
 from schemas.upload_schema import UploadValidator
 from middleware.validation import validate_request
-from services.claude_api import ClaudeService
-from utils.file_manager import FileManager
+from services.gemini_api import GeminiService
+# from utils.file_manager import FileManager
 upload_bp = Blueprint('upload', __name__)
 
 @upload_bp.route('/upload', methods=['POST'])

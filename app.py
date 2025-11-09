@@ -14,9 +14,12 @@ STATIC_DIR = os.path.join(BASE_DIR, 'static')
 # Import routes
 from routes.upload_routes import upload_bp
 #api_upload_bp
-from routes.analysis_routes import analysis_bp, api_analysis_bp
-from routes.conversion_routes import conversion_bp, api_conversion_bp
-from routes.download_routes import download_bp, api_download_bp
+from routes.analysis_routes import analysis_bp
+#, api_analysis_bp
+from routes.conversion_routes import conversion_bp
+#, api_conversion_bp
+from routes.download_routes import download_bp
+#, api_download_bp
 from routes.main_routes import main_bp
 
 # Import middleware
@@ -35,20 +38,13 @@ def create_app(config_class=Config):
                 static_folder=STATIC_DIR)
     app.config.from_object(config_class)
     
-    # Setup logging
-    setup_logging(app)
+
     
-    # Initialize extensions
-    setup_extensions(app)
+    # # Register error handlers
+    # register_error_handlers(app)
     
-    # Register blueprints
-    register_blueprints(app)
-    
-    # Register error handlers
-    register_error_handlers(app)
-    
-    # Setup session manager
-    setup_session_manager(app)
+    # # Setup session manager
+    # setup_session_manager(app)
     
     return app
 
@@ -92,16 +88,16 @@ def register_blueprints(app):
     app.register_blueprint(main_bp)
     
     # Register template routes (no prefix) - for rendering HTML pages
-    app.register_blueprint(upload_bp)  # /upload
-    app.register_blueprint(analysis_bp)  # /context/<file_id>
-    app.register_blueprint(conversion_bp)  # /progress/<task_id>
-    app.register_blueprint(download_bp)  # /download/<file_id>
+    # app.register_blueprint(upload_bp)  # /upload
+    # app.register_blueprint(analysis_bp)  # /context/<file_id>
+    # app.register_blueprint(conversion_bp)  # /progress/<task_id>
+    # app.register_blueprint(download_bp)  # /download/<file_id>
     
     # Register API routes with /api prefix
-    app.register_blueprint(api_upload_bp, url_prefix='/api')  # /api/upload, /api/zip-structure
-    app.register_blueprint(api_analysis_bp, url_prefix='/api')  # /api/analyze, /api/autocomplete, /api/confirm-context
-    app.register_blueprint(api_conversion_bp, url_prefix='/api')  # /api/progress, /api/progress/stream, /api/convert, /api/cancel
-    app.register_blueprint(api_download_bp, url_prefix='/api')  # /api/download
+    app.register_blueprint(upload_bp, url_prefix='/api')  # /api/upload, /api/zip-structure
+    app.register_blueprint(analysis_bp, url_prefix='/api')  # /api/analyze, /api/autocomplete, /api/confirm-context
+    app.register_blueprint(conversion_bp, url_prefix='/api')  # /api/progress, /api/progress/stream, /api/convert, /api/cancel
+    app.register_blueprint(download_bp, url_prefix='/api')  # /api/download
     
     app.logger.info('Blueprints registered')
 
