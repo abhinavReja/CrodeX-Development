@@ -115,4 +115,3 @@ def cancel_task(task_id):
     
     tasks[task_id]['status'] = 'cancelled'
     return jsonify({'message': 'Task cancelled'}), 200
-

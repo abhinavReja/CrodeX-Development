@@ -76,4 +76,3 @@ def download_file_content(file_id):
         as_attachment=True,
         download_name=file_info['name']
     )
-

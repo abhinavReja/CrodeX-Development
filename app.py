@@ -10,12 +10,30 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
-# Import routes
-from routes.upload_routes import upload_bp, api_upload_bp
-from routes.analysis_routes import analysis_bp, api_analysis_bp
-from routes.conversion_routes import conversion_bp, api_conversion_bp
-from routes.download_routes import download_bp, api_download_bp
+# Import routes - handle both old and new structure
 from routes.main_routes import main_bp
+
+# Try to import template and API blueprints separately
+try:
+    from routes.upload_routes import upload_bp, api_upload_bp
+except ImportError:
+    from routes.upload_routes import upload_bp
+    api_upload_bp = None
+
+try:
+    from routes.analysis_routes import analysis_bp, api_analysis_bp
+except ImportError:
+    from routes.analysis_routes import analysis_bp
+    api_analysis_bp = None
+
+try:
+    from routes.conversion_routes import conversion_bp, api_conversion_bp
+except ImportError:
+    from routes.conversion_routes import conversion_bp
+    api_conversion_bp = None
+
+# Download routes - these should always be available with key API changes
+from routes.download_routes import download_bp, api_download_bp
 
 # Import middleware
 from middleware.error_handler import register_error_handlers
@@ -90,15 +108,36 @@ def register_blueprints(app):
     app.register_blueprint(main_bp)
     
     # Register template routes (no prefix) - for rendering HTML pages
-    app.register_blueprint(upload_bp)  # /upload
-    app.register_blueprint(analysis_bp)  # /context/<file_id>
-    app.register_blueprint(conversion_bp)  # /progress/<task_id>
+    # Only register if they exist
+    try:
+        app.register_blueprint(upload_bp)  # /upload
+    except:
+        pass
+    
+    try:
+        app.register_blueprint(analysis_bp)  # /analysis/<file_id>, /context/<file_id>
+    except:
+        pass
+    
+    try:
+        app.register_blueprint(conversion_bp)  # /progress/<task_id>
+    except:
+        pass
+    
     app.register_blueprint(download_bp)  # /download/<file_id>
     
     # Register API routes with /api prefix
-    app.register_blueprint(api_upload_bp, url_prefix='/api')  # /api/upload, /api/zip-structure
-    app.register_blueprint(api_analysis_bp, url_prefix='/api')  # /api/analyze, /api/autocomplete, /api/confirm-context
-    app.register_blueprint(api_conversion_bp, url_prefix='/api')  # /api/progress, /api/progress/stream, /api/convert, /api/cancel
+    # Only register if they exist
+    if api_upload_bp:
+        app.register_blueprint(api_upload_bp, url_prefix='/api')  # /api/upload, /api/zip-structure
+    
+    if api_analysis_bp:
+        app.register_blueprint(api_analysis_bp, url_prefix='/api')  # /api/analyze, /api/autocomplete, /api/confirm-context
+    
+    if api_conversion_bp:
+        app.register_blueprint(api_conversion_bp, url_prefix='/api')  # /api/progress, /api/progress/stream, /api/convert, /api/cancel
+    
+    # Download API blueprint - always register (key API change)
     app.register_blueprint(api_download_bp, url_prefix='/api')  # /api/download
     
     app.logger.info('Blueprints registered')

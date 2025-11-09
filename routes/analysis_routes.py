@@ -132,4 +132,3 @@ def confirm_context():
         'task_id': task_id,
         'status': 'pending'
     }), 200
-

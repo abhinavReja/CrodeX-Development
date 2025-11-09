@@ -154,4 +154,3 @@ def zip_structure(file_id):
             return jsonify({'error': 'File content not available'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
