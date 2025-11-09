@@ -6,12 +6,14 @@ import logging
 from datetime import timedelta
 
 # Get the directory where this app.py file is located
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
 # Import routes
-from routes.upload_routes import upload_bp, api_upload_bp
+from routes.upload_routes import upload_bp
+#api_upload_bp
 from routes.analysis_routes import analysis_bp, api_analysis_bp
 from routes.conversion_routes import conversion_bp, api_conversion_bp
 from routes.download_routes import download_bp, api_download_bp
